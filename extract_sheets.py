@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from pypdf import PdfReader, PdfWriter
+import time
 
 from pdf_set import PDFSet
 
@@ -97,6 +98,7 @@ def extract(data: PDFSet, yellow_dir: str = None, red_dir: str = None):
 ##############################
 
 if __name__ == "__main__":
+    start = time.perf_counter()
     args = parse_args()
     source_dir = args.dataset
     yellow_dir = args.yellow_dir
@@ -105,5 +107,6 @@ if __name__ == "__main__":
     clear_pdfdir(yellow_dir)
     clear_pdfdir(red_dir)
     
-    data = PDFSet(source_dir, load_format='numpy')
+    data = PDFSet(source_dir, load_format='numpy20')
     extract(data, yellow_dir, red_dir)
+    print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

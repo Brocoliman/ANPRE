@@ -2,18 +2,25 @@ import os
 import numpy as np
 import fitz
 import matplotlib.pyplot as plt
+import cv2
 
 
 class PDFSet:
     """
     Container for one set of pdf files (either set of full cases, or set of sheets)
     """
-    def __init__(self, src: str, load_format = 'none'):
+    def __init__(self, src: str, load_format = 'none', print_events = True):
         """Finds valid PDF files from a source folder and stores list of objects and filenames
 
         Args:
             src (str): Source folder path
+            load_format (str): Whether to load PDF object data, and if as PyMuPDF object (fitz) or numpy ndarray
+                - none: do not load PDF object data
+                - fitz: load into fitz pdf
+                - numpyN: load into array with N dpi
         """
+        self.print_events = print_events
+        
         self.src = src
         self.filenames_full = os.listdir(src)
 
@@ -30,22 +37,24 @@ class PDFSet:
         
         if load_format == 'none':
             pass
-        if load_format == 'fitz':
-            for filename in self.filenames:
+        if load_format.startswith('fitz'):
+            for i, filename in enumerate(self.filenames):
                 path = os.path.join(src, filename)
                 doc = fitz.open(path)
                 self.fitz.append(doc)
+                if self.print_events: print(f"[TASK] Loading {i}: {filename} into fitz done.")
             self.iter = iter(self.fitz)
-        if load_format == 'numpy':
-            for filename in self.filenames:
+        if load_format.startswith("numpy"):
+            for i, filename in enumerate(self.filenames):
                 path = os.path.join(src, filename)
                 doc = fitz.open(path)
                 doc_pages = []
                 for page in doc:
-                    pix = page.get_pixmap(dpi=150)
+                    pix = page.get_pixmap(dpi=int(load_format[5:]))
                     img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n) # HWC
                     doc_pages.append(img)
                 self.numpy.append(doc_pages)
+                if self.print_events: print(f"[TASK] Loading {i}: {filename} into numpy done.")
             self.iter = iter(self.numpy)
     
     def __len__(self):
@@ -63,14 +72,15 @@ class PDFSet:
         """
         
         # Record average page colors (int, RGB)
-        colormaps = np.ones((len(self), 200, 3), dtype=np.uint8)
+        colormaps = np.ones((len(self), 300, 3), dtype=np.uint8)
 
         for idx, doc in enumerate(self):
             for i, img in enumerate(doc):
                 avg = np.mean(img, axis=(0, 1))
                 colormaps[idx, i] = avg
+                if i >= 350: break
             
-            print(f"Colormapping {idx} done")
+            print(f"[EVENT] Colormapping {idx} done. {'Note: report exceeded 300 pages' if len(doc)>300 else ''}")
         
         if visualize:
             plt.figure(figsize=(15, 2))
