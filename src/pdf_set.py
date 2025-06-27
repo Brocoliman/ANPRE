@@ -9,11 +9,30 @@ class PDFSet:
     Container for one set of pdf files (either set of full cases, or set of sheets)
     """
     
-    def __init__(self, data, load_format="none", print_events=True):
+    def __init__(self, data: list[list], load_format="none", filenames: list[str] = None, print_events=True):
         self.data = data
         self.load_format = load_format
+        self.filenames = filenames
         self.print_events = print_events
         self.iter = iter(self.data)
+    
+    @classmethod
+    def reduce(cls, src, selection: list[list[int]]):
+        """Takes only selection of pages from each document in PDFSet
+
+        Args:
+            src (PDFSet): source PDFSet
+            selection (list[list[int]]): describes the pages that will be taken from each document
+
+        Returns:
+            PDFSet: with only selection of pages
+        """
+        data = []
+        for doc_idx, doc in enumerate(src):
+            new_doc_data = [page for page_no, page in enumerate(doc) if page_no in selection[doc_idx]]
+            data.append(new_doc_data)
+        
+        return cls(data, src.load_format, src.filenames, src.print_events)
 
     @classmethod
     def fromFolder(cls, src: str, load_format="none", print_events=True):
@@ -25,22 +44,23 @@ class PDFSet:
                 - none: do not load PDF object data
                 - fitz: load into fitz pdf
                 - numpyN: load into array with N dpi
+        
+        Returns:
+            PDFSet: generated from folder of PDF
         """
-        data = []
-        output = cls(data, load_format, print_events)
 
-        output.src = src
-        output.filenames_full = os.listdir(src)
-
-        output.filenames = []
-        output.filenames_removed = []
-        for fn in output.filenames_full:
+        filenames_full = os.listdir(src)
+        filenames = []
+        filenames_removed = []
+        for fn in filenames_full:
             if fn.endswith(".pdf"):
                 output.filenames.append(fn)
             else:
-                output.filenames_removed.append(fn)
-
-
+                filenames_removed.append(fn)
+        
+        data = []
+        output = cls(data, load_format, filenames, print_events)
+        
         if load_format == "none":
             pass
         if load_format.startswith("fitz"):
