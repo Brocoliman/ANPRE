@@ -17,7 +17,7 @@ def parse_args():
         "-dataset",
         "-i",
         type=str,
-        default="data_mini",
+        default="data/mini",
         help="Path to folder with list of full patient case files in PDF",
     )
     parser.add_argument(
