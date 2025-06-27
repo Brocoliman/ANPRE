@@ -8,8 +8,15 @@ class PDFSet:
     """
     Container for one set of pdf files (either set of full cases, or set of sheets)
     """
+    
+    def __init__(self, data, load_format="none", print_events=True):
+        self.data = data
+        self.load_format = load_format
+        self.print_events = print_events
+        self.iter = iter(self.data)
 
-    def __init__(self, src: str, load_format="none", print_events=True):
+    @classmethod
+    def fromFolder(cls, src: str, load_format="none", print_events=True):
         """Finds valid PDF files from a source folder and stores list of objects and filenames
 
         Args:
@@ -19,34 +26,32 @@ class PDFSet:
                 - fitz: load into fitz pdf
                 - numpyN: load into array with N dpi
         """
-        self.print_events = print_events
+        data = []
+        output = cls(data, load_format, print_events)
 
-        self.src = src
-        self.filenames_full = os.listdir(src)
+        output.src = src
+        output.filenames_full = os.listdir(src)
 
-        self.filenames = []
-        self.filenames_removed = []
-        for fn in self.filenames_full:
+        output.filenames = []
+        output.filenames_removed = []
+        for fn in output.filenames_full:
             if fn.endswith(".pdf"):
-                self.filenames.append(fn)
+                output.filenames.append(fn)
             else:
-                self.filenames_removed.append(fn)
+                output.filenames_removed.append(fn)
 
-        self.fitz = []
-        self.numpy = []
 
         if load_format == "none":
             pass
         if load_format.startswith("fitz"):
-            for i, filename in enumerate(self.filenames):
+            for i, filename in enumerate(output.filenames):
                 path = os.path.join(src, filename)
                 doc = fitz.open(path)
-                self.fitz.append(doc)
-                if self.print_events:
+                data.append(doc)
+                if output.print_events:
                     print(f"[TASK] Loading {i}: {filename} into fitz done.")
-            self.iter = iter(self.fitz)
         if load_format.startswith("numpy"):
-            for i, filename in enumerate(self.filenames):
+            for i, filename in enumerate(output.filenames):
                 path = os.path.join(src, filename)
                 doc = fitz.open(path)
                 doc_pages = []
@@ -56,11 +61,12 @@ class PDFSet:
                         pix.height, pix.width, pix.n
                     )  # HWC
                     doc_pages.append(img)
-                self.numpy.append(doc_pages)
-                if self.print_events:
+                data.append(doc_pages)
+                if print_events:
                     print(f"[TASK] Loading {i}: {filename} into numpy done.")
-            self.iter = iter(self.numpy)
-
+        
+        return output
+    
     def __len__(self):
         return len(self.filenames)
 

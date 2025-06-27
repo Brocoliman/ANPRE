@@ -133,6 +133,7 @@ def extract(data: PDFSet, yellow_dir: str = None, red_dir: str = None):
                         "wb",
                     ) as f:
                         writer.write(f)
+        
 
 
 ##############################
@@ -149,6 +150,6 @@ if __name__ == "__main__":
     clear_pdfdir(yellow_dir)
     clear_pdfdir(red_dir)
 
-    data = PDFSet(source_dir, load_format="numpy20")
+    data = PDFSet.fromFolder(source_dir, "numpy20")
     extract(data, yellow_dir, red_dir)
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
