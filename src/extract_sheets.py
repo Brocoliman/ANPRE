@@ -25,14 +25,14 @@ def parse_args():
         "-y",
         type=str,
         default="case_outputs/yellow",
-        help="Path to folder with list of patient yellow sheets in PDF",
+        help="Path to folder to output patient yellow sheets in PDF",
     )
     parser.add_argument(
         "-red_dir",
         "-r",
         type=str,
         default="case_outputs/red",
-        help="Path to folder with list of patient red sheets in PDF",
+        help="Path to folder to output patient red sheets in PDF",
     )
 
     return parser.parse_args()
