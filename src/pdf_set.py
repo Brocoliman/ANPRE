@@ -108,6 +108,16 @@ class PDFSet:
     
     def __len__(self):
         return len(self.filepaths)
+    
+    def __getitem__(self, idx):
+        # To access documents
+        if isinstance(idx, int):
+            return self.pdfs[idx], self.imgs[idx], self.filepaths[idx]
+        
+        # To access pages
+        if isinstance(idx, tuple):
+            doc_idx, page_idx = idx
+            return self.pdfs[doc_idx][page_idx], self.imgs[doc_idx][page_idx], self.filepaths[doc_idx]
 
     def pdf_iter(self):
         return iter(self.pdfs)
