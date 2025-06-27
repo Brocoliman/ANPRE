@@ -1,0 +1,18 @@
+{
+  "format_id": "2025",
+  "anchors": ["top_box", "bottom_box"], 
+  "censor": [
+    {
+      "name": "Patient Name",
+      "relative_to": "top_box",
+      "topleft": [0, -40],
+      "bottomright": [200, 30]
+    },
+    {
+      "name": "DOB",
+      "relative_to": "top_box",
+      "topleft": [100, 20],
+      "bottomright": [300, 35]
+    }
+  ]
+}
