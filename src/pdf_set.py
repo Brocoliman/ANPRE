@@ -27,6 +27,7 @@ class PDFSet:
         Returns:
             PDFSet: with only selection of pages
         """
+        
         data = []
         for doc_idx, doc in enumerate(src):
             new_doc_data = [page for page_no, page in enumerate(doc) if page_no in selection[doc_idx]]
@@ -54,7 +55,7 @@ class PDFSet:
         filenames_removed = []
         for fn in filenames_full:
             if fn.endswith(".pdf"):
-                output.filenames.append(fn)
+                filenames.append(fn)
             else:
                 filenames_removed.append(fn)
         
