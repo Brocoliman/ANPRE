@@ -60,33 +60,36 @@ def extract(data: PDFSet, yellow_dir: str = None, red_dir: str = None):
     """
     colormaps = data.get_colormaps()
 
+    all_yellow_pages_idx = []
+    all_red_pages_idx = []
+    
     # Categorize by color
-    for file_idx in range(len(data)):
+    for doc_idx in range(len(data)):
         yellow_pages_idx = []
         yellow_prev_start = 0
         red_pages_idx = []
-        num_pages = len(colormaps[file_idx])
+        num_pages = len(colormaps[doc_idx])
 
         ### Parse in file
-        for page_idx in range(num_pages):
+        for page_no in range(num_pages):
 
-            pixel_rgb = np.uint8([[colormaps[file_idx, page_idx]]])
+            pixel_rgb = np.uint8([[colormaps[doc_idx, page_no]]])
             pixel_hsv = cv2.cvtColor(pixel_rgb, cv2.COLOR_RGB2HSV)[0, 0]
             hue, sat, val = pixel_hsv
 
             # Red
             if (sat > 20 and val > 50) and (hue > 160 or hue <= 0):
-                red_pages_idx.append(page_idx)
+                red_pages_idx.append(page_no)
                 # print(pixel_hsv, file_idx, "red")
 
             # Yellow
             elif (sat > 20 and val > 50) and (16 <= hue < 40):
-                yellow_pages_idx.append(page_idx)
+                yellow_pages_idx.append(page_no)
                 # print(pixel_hsv, file_idx, "yellow")
 
                 # if a new chain of yellow, mark it so
-                if page_idx - 1 not in yellow_pages_idx:
-                    yellow_prev_start = page_idx
+                if page_no - 1 not in yellow_pages_idx:
+                    yellow_prev_start = page_no
 
             # Neither; check if previous was yellow or red
             else:
@@ -94,7 +97,7 @@ def extract(data: PDFSet, yellow_dir: str = None, red_dir: str = None):
                 if (
                     yellow_pages_idx
                     and len(yellow_pages_idx) > 4
-                    and page_idx > num_pages / 2
+                    and page_no > num_pages / 2
                 ):
                     del yellow_pages_idx[yellow_pages_idx.index(yellow_prev_start) :]
 
@@ -102,38 +105,17 @@ def extract(data: PDFSet, yellow_dir: str = None, red_dir: str = None):
                 if red_pages_idx:
                     break
 
-        if yellow_dir and red_dir:
-            ### Save pages
-            reader = PdfReader(os.path.join(data.src, data.filenames[file_idx]))
-            writer = PdfWriter()
+        all_yellow_pages_idx.append(yellow_pages_idx)
+        all_red_pages_idx.append(red_pages_idx)
 
-            # If had red pages, add the red pages to a certain document
-            if red_pages_idx:
-                for page_idx in red_pages_idx:
-                    writer.add_page(reader.pages[page_idx])
-                with open(
-                    os.path.join(
-                        red_dir,
-                        f"{file_idx} pg{red_pages_idx[0]+1}{('-'+str(red_pages_idx[-1]+1))if len(red_pages_idx)>1 else ''}.pdf",
-                    ),
-                    "wb",
-                ) as f:
-                    writer.write(f)
+    yellowSet = PDFSet.reduce(data, all_yellow_pages_idx)
+    redSet = PDFSet.reduce(data, all_red_pages_idx)
 
-            # No red pages, then add all valid yellow pages to a certain document
-            else:
-                if yellow_pages_idx:  # some might not have valid yellow pages
-                    for page_idx in yellow_pages_idx:
-                        writer.add_page(reader.pages[page_idx])
-                    with open(
-                        os.path.join(
-                            yellow_dir,
-                            f"{file_idx} pg{yellow_pages_idx[0]+1}{('-'+str(yellow_pages_idx[-1]+1))if len(yellow_pages_idx)>1 else ''}.pdf",
-                        ),
-                        "wb",
-                    ) as f:
-                        writer.write(f)
-        
+    if yellow_dir and red_dir:
+        yellowSet.save(yellow_dir)
+        redSet.save(red_dir)
+
+    return yellowSet, redSet
 
 
 ##############################
@@ -150,6 +132,6 @@ if __name__ == "__main__":
     clear_pdfdir(yellow_dir)
     clear_pdfdir(red_dir)
 
-    data = PDFSet.fromFolder(source_dir, "numpy20")
+    data = PDFSet.fromFolder(source_dir, "numpy20 fitz")
     extract(data, yellow_dir, red_dir)
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
