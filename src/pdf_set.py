@@ -56,7 +56,6 @@ class PDFSet:
             print_events=src.print_events
         )
 
-
     @classmethod
     def fromFolder(cls, src: str, load_format='', print_events=True):
         """Finds valid PDF files from a source folder and stores list of objects and filepaths
@@ -124,6 +123,15 @@ class PDFSet:
     
     def img_iter(self):
         return iter(self.imgs)
+    
+    def copy(self):
+        return PDFSet(
+            pdfs=self.pdfs.copy(),
+            imgs=self.imgs.copy(),
+            load_format=self.load_format,
+            filepaths=self.filepaths.copy(),
+            print_events=self.print_events
+        )
 
     def get_colormaps(self, visualize=False) -> np.ndarray:
         """Find average color per page in list of case files

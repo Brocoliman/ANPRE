@@ -14,7 +14,7 @@ def parse_args():
     )
 
     parser.add_argument(
-        "-dataset",
+        "-src",
         "-i",
         type=str,
         default="data/mini",
@@ -125,7 +125,7 @@ def extract(data: PDFSet, yellow_dir: str = None, red_dir: str = None):
 if __name__ == "__main__":
     start = time.perf_counter()
     args = parse_args()
-    source_dir = args.dataset
+    source_dir = args.src
     yellow_dir = args.yellow_dir
     red_dir = args.red_dir
 
