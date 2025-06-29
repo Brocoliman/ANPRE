@@ -148,7 +148,6 @@ def anonymize(data: PDFSet, anon_dir: str = None):
             abs_x2, abs_y2 = pos(box, field['bottomright'])
             # turn to fitz units
             a = 72/300
-            print(abs_x1*a, abs_y1*a, abs_x2*a, abs_y2*a)
             redact_area = fitz.Rect(abs_x1*a, abs_y1*a, abs_x2*a, abs_y2*a)
             page.add_redact_annot(redact_area, fill=(0, 0, 0))
         page.apply_redactions()

@@ -68,6 +68,9 @@ def extract(data: PDFSet, yellow_dir: str = None, red_dir: str = None):
         yellow_pages_idx = []
         yellow_prev_start = 0
         red_pages_idx = []
+        red_prev_start = 0
+        curr_yellow = False
+        curr_red = False
         num_pages = len(colormaps[doc_idx])
 
         ### Parse in file
@@ -80,30 +83,39 @@ def extract(data: PDFSet, yellow_dir: str = None, red_dir: str = None):
             # Red
             if (sat > 20 and val > 50) and (hue > 160 or hue <= 0):
                 red_pages_idx.append(page_no)
-                # print(pixel_hsv, file_idx, "red")
+
+                # if a new chain of red, mark it so
+                if not curr_red:
+                    curr_red = True
+                    red_prev_start = page_no
 
             # Yellow
             elif (sat > 20 and val > 50) and (16 <= hue < 40):
                 yellow_pages_idx.append(page_no)
-                # print(pixel_hsv, file_idx, "yellow")
 
                 # if a new chain of yellow, mark it so
-                if page_no - 1 not in yellow_pages_idx:
+                if not curr_yellow:
+                    curr_yellow = True
                     yellow_prev_start = page_no
 
             # Neither; check if previous was yellow or red
             else:
-                # If previous was yellow, check if > 4 in a row at the back end -> remove those
-                if (
-                    yellow_pages_idx
-                    and len(yellow_pages_idx) > 4
-                    and page_no > num_pages / 2
-                ):
-                    del yellow_pages_idx[yellow_pages_idx.index(yellow_prev_start) :]
+                # If was end of yellow chain (if curr_yellow), check if > 2 in a row at the back end -> remove those
+                if curr_yellow:
+                    curr_yellow = False
+                    if (yellow_pages_idx
+                        and page_no-yellow_prev_start != 2):
+                        del yellow_pages_idx[yellow_pages_idx.index(yellow_prev_start) :]
 
                 # If previous was red, end loop because we don't need to check more;
-                if red_pages_idx:
-                    break
+                if curr_red:
+                    curr_red = False
+                    if (red_pages_idx
+                        and page_no-red_prev_start != 2):
+                        del red_pages_idx[red_pages_idx.index(red_prev_start) :]
+                
+        if red_pages_idx:
+            yellow_pages_idx = []
 
         all_yellow_pages_idx.append(yellow_pages_idx)
         all_red_pages_idx.append(red_pages_idx)
