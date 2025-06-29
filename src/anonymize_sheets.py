@@ -18,14 +18,14 @@ def parse_args():
         "-src",
         "-i",
         type=str,
-        default="data/mini",
+        default="case_outputs/yellow",
         help="Path to folder with list of full patient case files in PDF",
     )
     parser.add_argument(
         "-anon_dir",
         "-a",
         type=str,
-        default="case_outputs/yelanonlow",
+        default="case_outputs/anon",
         help="Path to folder to output patient anonymized sheets in PDF",
     )
 
@@ -101,13 +101,11 @@ def pos (box: np.ndarray, rel):
 def anonymize(data: PDFSet, anon_dir: str = None):
     anonSet = data.copy()
     
-    template = '../configs/template2025.json'
+    template = 'configs/template2025.json'
     with open(template) as f:
         config = json.load(f)
     anchors = config.get('anchors')
     blackout_query = config.get('censor')
-
-    assert len(anchors) == len(anchor_boxes)
 
     for doc_idx in range(len(anonSet)):
         page, img, fn = anonSet[doc_idx,0]
@@ -138,8 +136,9 @@ def anonymize(data: PDFSet, anon_dir: str = None):
                     cv2.drawContours(img, [box], 0, (0, 255, 0), 3)
                     anchor_boxes.append((box, area))
 
+        assert len(anchors) == len(anchor_boxes)
         anchor_boxes.sort(key=lambda pair: pair[1])
-        
+
         for field in blackout_query:
             parent_name = field['parent']
             parent_idx = anchors.index(parent_name)
