@@ -4,15 +4,15 @@
   "censor": [
     {
       "name": "Patient Name",
-      "relative_to": "top_box",
-      "topleft": [0, -40],
-      "bottomright": [200, 30]
+      "parent": "top_box",
+      "topleft": [0.1093, 0.2230],
+      "bottomright": [0.5465, 0.3284]
     },
     {
       "name": "DOB",
-      "relative_to": "top_box",
-      "topleft": [100, 20],
-      "bottomright": [300, 35]
+      "parent": "top_box",
+      "topleft": [0.7962, 0.2230],
+      "bottomright": [0.9456, 0.3284]
     }
   ]
 }
