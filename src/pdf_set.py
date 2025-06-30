@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import fitz
-import matplotlib.pyplot as plt
 
 
 class PDFSet:

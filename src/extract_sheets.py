@@ -2,7 +2,6 @@ import os
 import argparse
 import cv2
 import numpy as np
-from pypdf import PdfReader, PdfWriter
 import time
 import fitz
 import pytesseract
