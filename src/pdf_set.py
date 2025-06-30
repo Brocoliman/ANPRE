@@ -66,33 +66,3 @@ class PDFSet:
 
     def __iter__(self):
         return self.iter
-
-    def get_colormaps(self, visualize=False) -> np.ndarray:
-        """Find average color per page in list of case files
-
-        Args:
-            data (CaseSet): Source data containing list of list of numpy images
-            visualize (bool, optional): Tool to visualize the colorma per doc and page. Defaults to False.
-        """
-
-        # Record average page colors (int, RGB)
-        colormaps = np.ones((len(self), 300, 3), dtype=np.uint8)
-
-        for idx, doc in enumerate(self):
-            for i, img in enumerate(doc):
-                avg = np.mean(img, axis=(0, 1))
-                colormaps[idx, i] = avg
-                if i >= 350:
-                    break
-
-            print(
-                f"[EVENT] Colormapping {idx} done. {'Note: report exceeded 300 pages' if len(doc)>300 else ''}"
-            )
-
-        if visualize:
-            plt.figure(figsize=(15, 2))
-            plt.imshow(colormaps, interpolation="nearest")
-            plt.title("Page average colors")
-            plt.show()
-
-        return colormaps
