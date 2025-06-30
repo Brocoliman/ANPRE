@@ -10,14 +10,21 @@ class PDFSet:
     """
     Container for one set of pdf files (either set of full cases, or set of sheets)
     """
-    
-    def __init__(self, pdfs=None, imgs=None, load_format='', filepaths: list[str] = None, print_events=True):
+
+    def __init__(
+        self,
+        pdfs=None,
+        imgs=None,
+        load_format="",
+        filepaths: list[str] = None,
+        print_events=True,
+    ):
         self.pdfs = pdfs
         self.imgs = imgs
         self.load_format = load_format
         self.filepaths = filepaths
         self.print_events = print_events
-    
+
     @classmethod
     def reduce(cls, src, selection: list[list[int]]):
         """Takes only selection of pages from each document in PDFSet
@@ -41,7 +48,7 @@ class PDFSet:
                 for page_num in selection[doc_idx]:
                     new_doc.insert_pdf(full_doc, from_page=page_num, to_page=page_num)
                 reduced_pdfs.append(new_doc)
-            
+
             # Reduce numpy images
             if src.load_format.find("numpy") != -1:
                 full_imgs = src.imgs[doc_idx]
@@ -53,11 +60,11 @@ class PDFSet:
             imgs=reduced_imgs if src.load_format.find("numpy") != -1 else None,
             load_format=src.load_format,
             filepaths=src.filepaths,
-            print_events=src.print_events
+            print_events=src.print_events,
         )
 
     @classmethod
-    def fromFolder(cls, src: str, load_format='', print_events=True):
+    def fromFolder(cls, src: str, load_format="", print_events=True):
         """Finds valid PDF files from a source folder and stores list of objects and filepaths
 
         Args:
@@ -66,20 +73,20 @@ class PDFSet:
                 - none: do not load PDF object data
                 - fitz: load into fitz pdf
                 - numpyN: load into array with N dpi
-        
+
         Returns:
             PDFSet: generated from folder of PDF
         """
-        
+
         filepaths = []
         for fn in os.listdir(src):
             if fn.endswith(".pdf"):
                 filepaths.append(os.path.join(src, fn))
-        
+
         pdfs = []
         imgs = []
         output = cls(pdfs, imgs, load_format, filepaths, print_events)
-        
+
         if load_format.find("fitz") != -1:
             for i, filename in enumerate(output.filepaths):
                 doc = fitz.open(filename)
@@ -88,7 +95,7 @@ class PDFSet:
                     print(f"[TASK] Loading {i}: {filename} into fitz done.")
         if load_format.find("numpy") != -1:
             start = load_format.find("numpy") + 5
-            end = load_format.find(' ', load_format.find("numpy") + 5)
+            end = load_format.find(" ", load_format.find("numpy") + 5)
             dpi = int(load_format[start:end])
             for i, filename in enumerate(output.filepaths):
                 doc = fitz.open(filename)
@@ -102,35 +109,39 @@ class PDFSet:
                 imgs.append(doc_pages)
                 if print_events:
                     print(f"[TASK] Loading {i}: {filename} into numpy done.")
-        
+
         return output
-    
+
     def __len__(self):
         return len(self.filepaths)
-    
+
     def __getitem__(self, idx):
         # To access documents
         if isinstance(idx, int):
             return self.pdfs[idx], self.imgs[idx], self.filepaths[idx]
-        
+
         # To access pages
         if isinstance(idx, tuple):
             doc_idx, page_idx = idx
-            return self.pdfs[doc_idx][page_idx], self.imgs[doc_idx][page_idx], self.filepaths[doc_idx]
+            return (
+                self.pdfs[doc_idx][page_idx],
+                self.imgs[doc_idx][page_idx],
+                self.filepaths[doc_idx],
+            )
 
     def pdf_iter(self):
         return iter(self.pdfs)
-    
+
     def img_iter(self):
         return iter(self.imgs)
-    
+
     def copy(self):
         return PDFSet(
             pdfs=self.pdfs.copy(),
             imgs=self.imgs.copy(),
             load_format=self.load_format,
             filepaths=self.filepaths.copy(),
-            print_events=self.print_events
+            print_events=self.print_events,
         )
 
     def get_colormaps(self, visualize=False) -> np.ndarray:
@@ -166,7 +177,7 @@ class PDFSet:
     def save(self, save_dir: str):
         os.makedirs(save_dir, exist_ok=True)
 
-        if self.load_format.find('fitz') != -1: # from original document is preferred
+        if self.load_format.find("fitz") != -1:  # from original document is preferred
             for doc_idx, (doc, filepath) in enumerate(zip(self.pdfs, self.filepaths)):
                 writer = fitz.open()
                 for page_num in range(len(doc)):
@@ -177,11 +188,12 @@ class PDFSet:
                         print(f"[SKIP] Document {doc_idx} is empty, skipped")
                     continue
 
-                out_path = os.path.join(save_dir, f"{doc_idx}_{os.path.basename(filepath)}")
+                out_path = os.path.join(
+                    save_dir, f"{doc_idx}_{os.path.basename(filepath)}"
+                )
                 writer.save(out_path)
                 if self.print_events:
                     print(f"[SAVE] Saved fitz document {doc_idx} to {out_path}")
-
 
         elif self.load_format.find("numpy") != -1:
             for doc_idx, (pages, filepath) in enumerate(zip(self.imgs, self.filepaths)):
@@ -206,15 +218,21 @@ class PDFSet:
 
                     pdf_bytes = doc.write()
                     reader = PdfReader()
-                    reader.append_pages_from_reader(PdfReader(fitz.open("pdf", pdf_bytes)))
+                    reader.append_pages_from_reader(
+                        PdfReader(fitz.open("pdf", pdf_bytes))
+                    )
                     writer.add_page(reader.pages[0])
 
                 if len(writer.pages) == 0:
                     if self.print_events:
-                        print(f"[SKIP] Final output for doc {doc_idx} is empty, skipped")
+                        print(
+                            f"[SKIP] Final output for doc {doc_idx} is empty, skipped"
+                        )
                     continue
 
-                out_path = os.path.join(save_dir, f"{doc_idx}_{os.path.basename(filepath)}")
+                out_path = os.path.join(
+                    save_dir, f"{doc_idx}_{os.path.basename(filepath)}"
+                )
                 with open(out_path, "wb") as f:
                     writer.write(f)
                 if self.print_events:

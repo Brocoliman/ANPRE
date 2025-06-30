@@ -1,6 +1,6 @@
 {
   "format_id": "2025",
-  "anchors": ["top_box", "bottom_box"], 
+  "anchors": ["top_box", "bottom_box"],
   "censor": [
     {
       "name": "Patient Name",

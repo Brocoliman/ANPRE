@@ -248,6 +248,7 @@ PyWinCtl==0.3
 PyYAML==6.0.2
 pyzmq==26.0.3
 requests==2.31.0
+ruamel.yaml.clib==0.2.8  # pin for macOS wheel
 rubicon-objc==0.4.7
 ruff==0.12.1
 scikit-learn==1.5.0

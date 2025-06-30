@@ -2,7 +2,6 @@ import os
 import argparse
 import cv2
 import numpy as np
-from pypdf import PdfReader, PdfWriter
 import time
 
 from pdf_set import PDFSet
@@ -62,7 +61,7 @@ def extract(data: PDFSet, yellow_dir: str = None, red_dir: str = None):
 
     all_yellow_pages_idx = []
     all_red_pages_idx = []
-    
+
     # Categorize by color
     for doc_idx in range(len(data)):
         yellow_pages_idx = []
@@ -92,8 +91,7 @@ def extract(data: PDFSet, yellow_dir: str = None, red_dir: str = None):
                 # If previous was red, end loop because we don't need to check more;
                 if curr_red:
                     curr_red = False
-                    if (red_pages_idx
-                        and page_no-red_prev_start != 2):
+                    if red_pages_idx and page_no - red_prev_start != 2:
                         print(doc_idx, red_pages_idx, page_no, red_prev_start)
                         del red_pages_idx[red_pages_idx.index(red_prev_start) :]
 
@@ -109,10 +107,11 @@ def extract(data: PDFSet, yellow_dir: str = None, red_dir: str = None):
                 # If was end of yellow chain (if curr_yellow), check if > 2 in a row at the back end -> remove those
                 if curr_yellow:
                     curr_yellow = False
-                    if (yellow_pages_idx
-                        and page_no-yellow_prev_start != 2):
-                        del yellow_pages_idx[yellow_pages_idx.index(yellow_prev_start) :]                
-                
+                    if yellow_pages_idx and page_no - yellow_prev_start != 2:
+                        del yellow_pages_idx[
+                            yellow_pages_idx.index(yellow_prev_start) :
+                        ]
+
         if red_pages_idx:
             yellow_pages_idx = []
 
