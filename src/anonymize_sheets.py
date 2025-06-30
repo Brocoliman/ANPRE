@@ -136,9 +136,13 @@ def anonymize(data: PDFSet, anon_dir: str = None):
                     cv2.drawContours(img, [box], 0, (0, 255, 0), 3)
                     anchor_boxes.append((box, area))
 
-        assert len(anchors) == len(anchor_boxes)
+        if len(anchors) != len(anchor_boxes):
+            print(f"[ERROR] {fn} is invalid, will be skipped")
+            continue
+            
         anchor_boxes.sort(key=lambda pair: pair[1])
 
+        h = True
         for field in blackout_query:
             parent_name = field['parent']
             parent_idx = anchors.index(parent_name)
@@ -148,6 +152,9 @@ def anonymize(data: PDFSet, anon_dir: str = None):
             abs_x2, abs_y2 = pos(box, field['bottomright'])
             # turn to fitz units
             a = 72/300
+            if h: 
+                print(doc_idx, abs_x1*a, abs_y1*a, abs_x2*a, abs_y2*a)
+                h = False
             redact_area = fitz.Rect(abs_x1*a, abs_y1*a, abs_x2*a, abs_y2*a)
             page.add_redact_annot(redact_area, fill=(0, 0, 0))
         page.apply_redactions()

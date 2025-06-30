@@ -88,31 +88,30 @@ def extract(data: PDFSet, yellow_dir: str = None, red_dir: str = None):
                 if not curr_red:
                     curr_red = True
                     red_prev_start = page_no
+            else:
+                # If previous was red, end loop because we don't need to check more;
+                if curr_red:
+                    curr_red = False
+                    if (red_pages_idx
+                        and page_no-red_prev_start != 2):
+                        print(doc_idx, red_pages_idx, page_no, red_prev_start)
+                        del red_pages_idx[red_pages_idx.index(red_prev_start) :]
 
             # Yellow
-            elif (sat > 20 and val > 50) and (16 <= hue < 40):
+            if (sat > 20 and val > 50) and (16 <= hue < 40):
                 yellow_pages_idx.append(page_no)
 
                 # if a new chain of yellow, mark it so
                 if not curr_yellow:
                     curr_yellow = True
                     yellow_prev_start = page_no
-
-            # Neither; check if previous was yellow or red
             else:
                 # If was end of yellow chain (if curr_yellow), check if > 2 in a row at the back end -> remove those
                 if curr_yellow:
                     curr_yellow = False
                     if (yellow_pages_idx
                         and page_no-yellow_prev_start != 2):
-                        del yellow_pages_idx[yellow_pages_idx.index(yellow_prev_start) :]
-
-                # If previous was red, end loop because we don't need to check more;
-                if curr_red:
-                    curr_red = False
-                    if (red_pages_idx
-                        and page_no-red_prev_start != 2):
-                        del red_pages_idx[red_pages_idx.index(red_prev_start) :]
+                        del yellow_pages_idx[yellow_pages_idx.index(yellow_prev_start) :]                
                 
         if red_pages_idx:
             yellow_pages_idx = []
