@@ -106,8 +106,9 @@ def crop_read(
             continue
         word = txt.strip()
         # record matches for caller
-        if word.lower() in kw_lower:
-            matched.add(word)
+        for kw in kw_lower:
+            if kw in word.lower():
+                matched.add(word)
         # draw EVERY word’s box
         x, y, w, h = (tdata[k][i] for k in ("left", "top", "width", "height"))
         cv2.rectangle(img_bgr, (x, y), (x + w, y + h), BOX_COLOR, 1)
