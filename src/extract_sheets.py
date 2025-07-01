@@ -10,6 +10,9 @@ from collections import defaultdict
 
 from pdf_set import PDFSet
 
+BASE_DPI = 150  # dpi which CROP_PX derived from
+CROP_PX = (20, 0, 200, 300)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -28,6 +31,13 @@ def parse_args():
         type=str,
         default="case_outputs/sheets",
         help="Path to folder with list of patient summary sheets in PDF",
+    )
+    parser.add_argument(
+        "-debug",
+        "-d",
+        type=str,
+        default="case_outputs/sheets_debug",
+        help="Path to folder for debugging sheet detection",
     )
     parser.add_argument(
         "-dpi",
@@ -59,8 +69,9 @@ def crop_read(
     matched : set[str]          # words from kw found in the crop
     annotated_bgr : np.ndarray  # BGR image with rectangles & labels
     """
+    scale = 72 / BASE_DPI
     x0, y0, x1, y1 = crop_px
-    clip = fitz.Rect(x0 * 72 / dpi, y0 * 72 / dpi, x1 * 72 / dpi, y1 * 72 / dpi)
+    clip = fitz.Rect(x0 * scale, y0 * scale, x1 * scale, y1 * scale)
 
     # ---- render at *at least* 300 dpi for small fonts --------------------
     pix = page.get_pixmap(dpi=dpi, clip=clip, colorspace=fitz.csRGB, alpha=False)
@@ -107,9 +118,8 @@ def crop_read(
     return matched, img_bgr
 
 
-def extract(data: PDFSet, dpi: int, output_dir: str = None, debug=True):
+def extract(data: PDFSet, dpi: int, output_dir: str = None, debug_dir: str = None):
     # ----- configuration -------------------------------------------------
-    CROP_PX = (20, 0, 200, 300)  # header strip (px)
     MIN_LENGTH = 4
     PROGRESS_STEP = 50
     KEYWORDS = [
@@ -119,15 +129,19 @@ def extract(data: PDFSet, dpi: int, output_dir: str = None, debug=True):
         "Hearing",
         "Rosenbaum",
         "Masks",
+        "HX",
+        "Benton",
+        "Date",
     ]  # BOTH must appear
     # --------------------------------------------------------------------
 
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    x0, y0, x1, y1 = CROP_PX
-    w_pt = (x1 - x0) * 72 / dpi
-    h_pt = (y1 - y0) * 72 / dpi
+    debug_dir = Path(debug_dir)
+
+    w_pt = (CROP_PX[2] - CROP_PX[0]) * 72 / BASE_DPI
+    h_pt = (CROP_PX[3] - CROP_PX[1]) * 72 / BASE_DPI
 
     totals, hits = 0, defaultdict(list)
     t0 = time.perf_counter()
@@ -163,7 +177,7 @@ def extract(data: PDFSet, dpi: int, output_dir: str = None, debug=True):
                     print(f"[EVENT] {pdf_name} page {page.number} has word {matched}")
 
                 # Save crop if debug OR not kept
-                if debug or not is_sheet:
+                if debug_dir:
                     dst = crop_doc.new_page(width=w_pt, height=h_pt)
                     dst.insert_image(
                         dst.rect, stream=cv2.imencode(".png", annotated)[1].tobytes()
@@ -174,10 +188,10 @@ def extract(data: PDFSet, dpi: int, output_dir: str = None, debug=True):
             keep_doc.save(out_dir / f"{src.stem}.pdf", garbage=4, deflate=True)
             keep_doc.close()
             hits[src] = kept_list
-            if debug:
-                crop_doc.save(out_dir / f"crop_{src.stem}.pdf", garbage=4, deflate=True)
+            if debug_dir:
+                crop_doc.save(debug_dir / f"{src.stem}.pdf", garbage=4, deflate=True)
         else:
-            crop_doc.save(out_dir / f"crop_{src.stem}.pdf", garbage=4, deflate=True)
+            crop_doc.save(debug_dir / f"{src.stem}.pdf", garbage=4, deflate=True)
         crop_doc.close()
 
     # -------- summary ----------------------------------------------------
@@ -203,10 +217,12 @@ if __name__ == "__main__":
     args = parse_args()
     source_dir = args.dataset
     output_dir = args.output
+    debug_dir = args.debug
     dpi = args.dpi
 
     clear_pdfdir(output_dir)
+    clear_pdfdir(debug_dir)
 
     data = PDFSet(source_dir, load_format=f"numpy{dpi}")
-    extract(data, dpi, output_dir)
+    extract(data, dpi, output_dir, debug_dir)
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
