@@ -4,7 +4,7 @@ import base64
 from PIL import Image
 import io
 import os
-from prompts import patient_info_prompt
+from prompts import patient_full_prompt
 from ollama_class import OllamaIntegration
 
 
@@ -41,7 +41,7 @@ async def execute_patient_prompt(ollama_instance, image_path):
             return None
 
         # Set the master prompt for patient information extraction
-        ollama_instance.set_master_prompt(patient_info_prompt)
+        ollama_instance.set_master_prompt(patient_full_prompt)
 
         # Generate response with the base64-encoded image
         response = await ollama_instance.generate_response(images=[image_base64])
