@@ -138,15 +138,15 @@ def extract(
     MIN_LENGTH = 4
     PROGRESS_STEP = 50
     KEYWORDS = [
+        "Benton",
+        "Date",
         "Patient",
         "Hospital",
         "Referral",
+        "HX",
         "Hearing",
         "Rosenbaum",
         "Masks",
-        "HX",
-        "Benton",
-        "Date",
     ]
     # --------------------------------------------------------------------
 
@@ -182,7 +182,7 @@ def extract(
                 matched, annotated = crop_read(page, CROP_PX, dpi, KEYWORDS)
                 is_sheet = len(matched) >= MIN_LENGTH
 
-                # Require BOTH Benton & Sheet
+                # Sheet inclusion
                 if is_sheet:
                     if keep_doc is None:
                         keep_doc = fitz.open()
@@ -208,7 +208,7 @@ def extract(
             prelim_datalist.append([idx, new_filename, None, None, None, None, None])
             hits[src] = kept_list
             if debug_dir:
-                debug_doc.save(debug_dir / f"{src.stem}.pdf", garbage=4, deflate=True)
+                debug_doc.save(debug_dir / new_filename, garbage=4, deflate=True)
         else:
             debug_doc.save(debug_dir / f"{src.stem}.pdf", garbage=4, deflate=True)
         debug_doc.close()
