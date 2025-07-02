@@ -2,6 +2,7 @@ import os
 import argparse
 import cv2
 import numpy as np
+from pandas import DataFrame
 import time
 import fitz
 import pytesseract
@@ -22,7 +23,7 @@ def parse_args():
         "-dataset",
         "-i",
         type=str,
-        default="data/one",
+        default="data/mini",
         help="Path to folder with list of full patient case files in PDF",
     )
     parser.add_argument(
@@ -38,6 +39,13 @@ def parse_args():
         type=str,
         default="case_outputs/sheets_debug",
         help="Path to folder for debugging sheet detection",
+    )
+    parser.add_argument(
+        "-spreadsheet",
+        "-xl",
+        type=str,
+        default="case_outputs/patient_data.csv",
+        help="Path to CSV file with final patient data",
     )
     parser.add_argument(
         "-dpi",
@@ -119,7 +127,13 @@ def crop_read(
     return matched, img_bgr
 
 
-def extract(data: PDFSet, dpi: int, output_dir: str = None, debug_dir: str = None):
+def extract(
+    data: PDFSet,
+    dpi: int,
+    output_dir: str = None,
+    xl_pth: str = None,
+    debug_dir: str = None,
+):
     # ----- configuration -------------------------------------------------
     MIN_LENGTH = 4
     PROGRESS_STEP = 50
@@ -133,13 +147,15 @@ def extract(data: PDFSet, dpi: int, output_dir: str = None, debug_dir: str = Non
         "HX",
         "Benton",
         "Date",
-    ]  # BOTH must appear
+    ]
     # --------------------------------------------------------------------
 
     out_dir = Path(output_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-
     debug_dir = Path(debug_dir)
+    xl_pth = Path(xl_pth)
+
+    # Contains record_id, new filename, other fields not added yet
+    prelim_datalist = []
 
     w_pt = (CROP_PX[2] - CROP_PX[0]) * 72 / BASE_DPI
     h_pt = (CROP_PX[3] - CROP_PX[1]) * 72 / BASE_DPI
@@ -147,14 +163,14 @@ def extract(data: PDFSet, dpi: int, output_dir: str = None, debug_dir: str = Non
     totals, hits = 0, defaultdict(list)
     t0 = time.perf_counter()
 
-    for pdf_name in data.filenames:
+    for idx, pdf_name in enumerate(data.filenames):
         src = Path(data.src) / pdf_name
         if not src.is_file():
             print(f"[WARN] Missing file: {src}")
             continue
 
         keep_doc = None  # destination for kept pages
-        crop_doc = fitz.open()  # debug crops
+        debug_doc = fitz.open()  # debug crops
         kept_list = []
 
         with fitz.open(src) as doc:
@@ -179,21 +195,36 @@ def extract(data: PDFSet, dpi: int, output_dir: str = None, debug_dir: str = Non
 
                 # Save crop if debug OR not kept
                 if debug_dir:
-                    dst = crop_doc.new_page(width=w_pt, height=h_pt)
+                    dst = debug_doc.new_page(width=w_pt, height=h_pt)
                     dst.insert_image(
                         dst.rect, stream=cv2.imencode(".png", annotated)[1].tobytes()
                     )
 
         # -------- write outputs ------------------------------------------
         if keep_doc:
-            keep_doc.save(out_dir / f"{src.stem}.pdf", garbage=4, deflate=True)
+            new_filename = f"{idx:05d}.pdf"
+            keep_doc.save(out_dir / new_filename, garbage=4, deflate=True)
             keep_doc.close()
+            prelim_datalist.append([idx, new_filename, None, None, None, None, None])
             hits[src] = kept_list
             if debug_dir:
-                crop_doc.save(debug_dir / f"{src.stem}.pdf", garbage=4, deflate=True)
+                debug_doc.save(debug_dir / f"{src.stem}.pdf", garbage=4, deflate=True)
         else:
-            crop_doc.save(debug_dir / f"{src.stem}.pdf", garbage=4, deflate=True)
-        crop_doc.close()
+            debug_doc.save(debug_dir / f"{src.stem}.pdf", garbage=4, deflate=True)
+        debug_doc.close()
+
+    # Save to excel
+    col_names = [
+        "record_id",
+        "filename",
+        "lastname",
+        "firstname",
+        "occurrence",
+        "exam_date",
+        "dob",
+    ]
+    prelim_df = DataFrame(prelim_datalist, columns=col_names)
+    prelim_df.to_csv(xl_pth, index=False)
 
     # -------- summary ----------------------------------------------------
     elapsed = time.perf_counter() - t0
@@ -220,10 +251,11 @@ if __name__ == "__main__":
     output_dir = args.output
     debug_dir = args.debug
     dpi = args.dpi
+    xl_pth = args.spreadsheet
 
     clear_pdfdir(output_dir)
     clear_pdfdir(debug_dir)
 
     data = PDFSet(source_dir, load_format=f"numpy{dpi}")
-    extract(data, dpi, output_dir, debug_dir)
+    extract(data, dpi, output_dir, xl_pth, debug_dir)
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
