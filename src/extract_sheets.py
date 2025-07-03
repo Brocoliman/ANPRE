@@ -210,7 +210,7 @@ def extract(
             new_filename = f"{idx:05d}.pdf"
             keep_doc.save(output_dir / new_filename, garbage=4, deflate=True)
             keep_doc.close()
-
+            
             # -------- extract all available info from filename ------------------------------------------
             data_tokens = filename.stem.split(" ")
             # if name is more than 2 space-separated words
@@ -240,6 +240,7 @@ def extract(
                 ]
             )
             hits[filename] = kept_list
+
             if debug_dir:
                 debug_doc.save(debug_dir / new_filename, garbage=4, deflate=True)
         else:
