@@ -265,6 +265,11 @@ def segment(
     filenames = source_dir.iterdir()
 
     for filename in filenames:
+        if not filename.is_file():
+            print(f"[WARN] Missing file: {filename}")
+            continue
+        if not filename.suffix == ".pdf":
+            continue
 
         # ═══════════ align all sheets ════════════════════════════════════
         aligned_pages = []
