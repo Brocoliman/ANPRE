@@ -290,7 +290,7 @@ def segment(
                 find_border_homography(page, dpi=dpi)
             )
             homography_time = time.perf_counter() - t0
-            print(f"[REPORT] Homography time: {homography_time}")
+            print(f"[REPORT] {filename} {page_no} {homography_time}")
 
             pix_aligned = cv2.warpPerspective(img_bgr, Hmat, (W_out, H_out))
             aligned_pages.append(pix_aligned)
