@@ -9,8 +9,6 @@ import pytesseract
 from pathlib import Path
 from collections import defaultdict
 
-from pdf_set import PDFSet
-
 BASE_DPI = 150  # dpi which CROP_PX derived from
 CROP_PX = (20, 0, 200, 300)
 
@@ -20,7 +18,8 @@ def parse_args():
         description="Processing tool to extract, anonymize, and then segment patient case sheets for data processing and recording"
     )
     parser.add_argument(
-        "-dataset",
+        "-input",
+        "-src",
         "-i",
         type=str,
         default="data/mini",
@@ -37,7 +36,7 @@ def parse_args():
         "-debug",
         "-d",
         type=str,
-        default="case_outputs/sheets_debug",
+        default="debug/sheets",
         help="Path to folder for debugging sheet detection",
     )
     parser.add_argument(
@@ -62,9 +61,9 @@ def clear_pdfdir(path):
             os.remove(os.path.join(path, file))
 
 
-##############################
-# Extract
-##############################
+# ═════════════════════  helper: crop and then use OCR to detect tokens  ════════════════
+
+
 def crop_read(
     page: fitz.Page, crop_px: tuple[int, int, int, int], dpi: int, kw: list[str]
 ):
@@ -127,16 +126,18 @@ def crop_read(
     return matched, img_bgr
 
 
+# ═════════════════════  extract all sheets from a folder of cases  ════════════════
+
+
 def extract(
-    data: PDFSet,
+    source_dir: str,
+    output_dir: str,
+    debug_dir: str,
+    xl_pth: str,
     dpi: int,
-    output_dir: str = None,
-    xl_pth: str = None,
-    debug_dir: str = None,
 ):
     # ----- configuration -------------------------------------------------
     MIN_LENGTH = 4
-    PROGRESS_STEP = 50
     KEYWORDS = [
         "Benton",
         "Date",
@@ -150,9 +151,12 @@ def extract(
     ]
     # --------------------------------------------------------------------
 
-    out_dir = Path(output_dir)
+    source_dir = Path(source_dir)
+    output_dir = Path(output_dir)
     debug_dir = Path(debug_dir)
     xl_pth = Path(xl_pth)
+
+    filenames = source_dir.iterdir()
 
     # Contains record_id, new filename, other fields not added yet
     prelim_datalist = []
@@ -163,21 +167,22 @@ def extract(
     totals, hits = 0, defaultdict(list)
     t0 = time.perf_counter()
 
-    for idx, pdf_name in enumerate(data.filenames):
-        src = Path(data.src) / pdf_name
-        if not src.is_file():
-            print(f"[WARN] Missing file: {src}")
+    occurrence_dicts = {}
+
+    for idx, filename in enumerate(filenames):
+        if not filename.is_file():
+            print(f"[WARN] Missing file: {filename}")
+            continue
+        if not filename.suffix == ".pdf":
             continue
 
         keep_doc = None  # destination for kept pages
         debug_doc = fitz.open()  # debug crops
         kept_list = []
 
-        with fitz.open(src) as doc:
+        with fitz.open(filename) as doc:
             for page in doc:
                 totals += 1
-                if totals % PROGRESS_STEP == 0:
-                    print(f"[EVENT] Processed {totals} pages")
 
                 matched, annotated = crop_read(page, CROP_PX, dpi, KEYWORDS)
                 is_sheet = len(matched) >= MIN_LENGTH
@@ -191,7 +196,7 @@ def extract(
                     )
                     kept_list.append(page.number + 1)
 
-                    print(f"[EVENT] {pdf_name} page {page.number} has word {matched}")
+                    print(f"[EVENT] {filename} page {page.number} has word {matched}")
 
                 # Save crop if debug OR not kept
                 if debug_dir:
@@ -203,25 +208,58 @@ def extract(
         # -------- write outputs ------------------------------------------
         if keep_doc:
             new_filename = f"{idx:05d}.pdf"
-            keep_doc.save(out_dir / new_filename, garbage=4, deflate=True)
+            keep_doc.save(output_dir / new_filename, garbage=4, deflate=True)
             keep_doc.close()
-            prelim_datalist.append([idx, new_filename, None, None, None, None, None])
-            hits[src] = kept_list
+
+            # -------- extract all available info from filename ------------------------------------------
+            data_tokens = filename.stem.split(" ")
+            # if name is more than 2 space-separated words
+            if len(data_tokens) > 6:
+                data_tokens = [data_tokens[0] + data_tokens[1]] + data_tokens[2:]
+            lastname, firstname, mrn, exam_y, exam_m, exam_d = data_tokens
+
+            if mrn not in occurrence_dicts.keys():
+                occurrence_dicts.update({mrn: 1})
+            else:
+                occurrence_dicts[mrn] += 1
+
+            prelim_datalist.append(
+                [
+                    idx,  # record_id
+                    new_filename,  # filename
+                    None,  # format (will have to be determined)
+                    lastname,  # lastname
+                    firstname,  # firstname
+                    occurrence_dicts[mrn],  # occurrence number
+                    int(exam_m),
+                    int(exam_d),
+                    int(exam_y),
+                    None,
+                    None,
+                    None,
+                ]
+            )
+            hits[filename] = kept_list
             if debug_dir:
                 debug_doc.save(debug_dir / new_filename, garbage=4, deflate=True)
         else:
-            debug_doc.save(debug_dir / f"{src.stem}.pdf", garbage=4, deflate=True)
+            debug_doc.save(debug_dir / f"{filename.stem}.pdf", garbage=4, deflate=True)
         debug_doc.close()
 
     # Save to excel
     col_names = [
-        "record_id",
+        "record_id",  # not mrn
         "filename",
+        "format",
         "lastname",
         "firstname",
         "occurrence",
-        "exam_date",
-        "dob",
+        "exam_m",
+        "exam_d",
+        "exam_y",
+        "dob_m",
+        "dob_d",
+        "dob_y",
     ]
     prelim_df = DataFrame(prelim_datalist, columns=col_names)
     prelim_df.to_csv(xl_pth, index=False)
@@ -240,14 +278,12 @@ def extract(
     print(f"Elapsed time: {elapsed:.1f} s")
 
 
-##############################
-# Main: Runs all functions from source data to generating red and yellow sheets
-##############################
+# ═════════════════════  Main: Runs all functions from source data to sheets  ════════════════
 
 if __name__ == "__main__":
     start = time.perf_counter()
     args = parse_args()
-    source_dir = args.dataset
+    source_dir = args.input
     output_dir = args.output
     debug_dir = args.debug
     dpi = args.dpi
@@ -256,6 +292,5 @@ if __name__ == "__main__":
     clear_pdfdir(output_dir)
     clear_pdfdir(debug_dir)
 
-    data = PDFSet(source_dir, load_format=f"numpy{dpi}")
-    extract(data, dpi, output_dir, xl_pth, debug_dir)
+    extract(source_dir, output_dir, debug_dir, xl_pth, dpi)
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
