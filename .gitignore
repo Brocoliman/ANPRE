@@ -2,6 +2,8 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,latex,c,c++
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,jupyternotebooks,latex,c,c++
 
+scratch/out/
+
 # test files
 pytest.xml
 pytest-coverage.txt
@@ -506,6 +508,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.v2
 env/
 venv/
 ENV/
