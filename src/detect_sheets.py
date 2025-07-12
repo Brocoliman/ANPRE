@@ -1,6 +1,8 @@
 import os
 import argparse
 import time
+import pandas as pd
+from table_ocr import get_table
 
 
 def parse_args():
@@ -12,22 +14,15 @@ def parse_args():
         "-src",
         "-i",
         type=str,
-        default="data/mini",
-        help="Path to folder with list of full patient case files in PDF",
+        default="case_outputs/seg",
+        help="Path to folder with list of segmented sheets in PNG",
     )
     parser.add_argument(
         "-output",
         "-o",
         type=str,
-        default="case_outputs/sheets",
-        help="Path to folder with list of patient summary sheets in PDF",
-    )
-    parser.add_argument(
-        "-debug",
-        "-d",
-        type=str,
-        default="case_outputs/sheets_debug",
-        help="Path to folder for debugging sheet detection",
+        default="case_outputs/tables",
+        help="Path to folder with list of csv tables for patient information",
     )
     parser.add_argument(
         "-spreadsheet",
@@ -59,7 +54,20 @@ def segment(
     Creates case_outputs/tables/000x.csv of patient records
     """
 
-    pass
+    # ---------- Config ----------
+    seg_query = ["body1_", "body2_"]
+
+    # --------------------------- Set up data ---------------------------
+    df = pd.read_csv(xl_pth)
+    fn_roots = df["filename"]  # 0000x.pdf
+
+    for fn in fn_roots:
+        result = pd.DataFrame(columns=["Left Head", "Left", "Middle", "Right"])
+        for seg in seg_query:
+            result = pd.concat(
+                [result, get_table(os.path.join(source_dir, seg + fn[:-3] + "png"))]
+            )
+        result.to_csv(os.path.join(output_dir, fn))
 
 
 ##############################
@@ -69,12 +77,12 @@ def segment(
 if __name__ == "__main__":
     start = time.perf_counter()
     args = parse_args()
-    source_dir = args.dataset
+    source_dir = args.input
     output_dir = args.output
-    debug_dir = args.debug
     xl_pth = args.spreadsheet
 
     clear_pdfdir(output_dir)
-    clear_pdfdir(debug_dir)
+
+    segment(source_dir, output_dir, xl_pth)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
