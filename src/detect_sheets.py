@@ -1,8 +1,7 @@
 import os
 import argparse
 import time
-import pandas as pd
-from table_ocr import get_table
+from table_ocr import get_table, scan
 
 
 def parse_args():
@@ -55,19 +54,18 @@ def segment(
     """
 
     # ---------- Config ----------
-    seg_query = ["body1_", "body2_"]
+    # seg_query = ["body1_", "body2_"]
 
     # --------------------------- Set up data ---------------------------
-    df = pd.read_csv(xl_pth)
-    fn_roots = df["filename"]  # 0000x.pdf
 
-    for fn in fn_roots:
-        result = pd.DataFrame(columns=["Left Head", "Left", "Middle", "Right"])
-        for seg in seg_query:
-            result = pd.concat(
-                [result, get_table(os.path.join(source_dir, seg + fn[:-3] + "png"))]
-            )
-        result.to_csv(os.path.join(output_dir, fn))
+    # scan all in the source directory (so make sure only wanted segmentations are there)
+    outputs = scan(source_dir)
+
+    tables = {path: get_table(path, outs) for path, outs in zip(source_dir, outputs)}
+
+    print(tables)
+
+    # result = pd.DataFrame(columns=["Left Head", "Left", "Middle", "Right"])
 
 
 ##############################
