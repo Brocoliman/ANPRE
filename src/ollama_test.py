@@ -55,7 +55,7 @@ async def execute_patient_prompt(ollama_instance, image_path):
         if patient_info_dict:
             print("Parsed Patient Info Dictionary:")
             print(patient_info_dict)
-            print("Type:", type(patient_info_dict))
+            print("Type:", isinstance(patient_info_dict, dict))
         else:
             print("Failed to parse dictionary; check raw response above.")
 

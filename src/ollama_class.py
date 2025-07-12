@@ -5,7 +5,7 @@ import re
 
 
 class OllamaIntegration:
-    def __init__(self, model="llama3.2-vision:11b", host=None, master_prompt=""):
+    def __init__(self, model="gemma3:4b", host=None, master_prompt=""):
         """
         Initialize the OllamaIntegration class for interacting with the Ollama server.
 

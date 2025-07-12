@@ -1,18 +1,15 @@
 # this file contains prompts to be used by Ollama
 
-common_context = """Table Text Recognition
+common_context = """
+SYSTEM: You are an OCR engine. Your *only* output must be a single Python dictionary literal
+(from the very first “{” through the matching “}”), with no prose, no markdown fences, no backticks,
+and no trailing or leading characters. NOTHING ELSE.
 
 You are helping to transcribe images of patient evaluation tables into text within python dictionaries.
 This will allow us to automatically transcribe the images into excel files for research.
 All queries will include images and additional context specifying the fields to find and transcribe.
 Some of the fields might be empty - for those return the empty string.
 
-Rules: DO NOT INCLUDE ANY SYSTEM MESSAGES. RETURN ONLY VALID PYTHON DICTIONARIES AS TEXT ONLY.
-MUST NOT INCLUDE THINGS LIKE:
-"Here is a Python dictionary that matches the specified fields:
-
-
-```python"
 
 """
 
@@ -47,12 +44,10 @@ Checked refers to whether the first column in a field row is marked with X.
 Response refers to the written numerical value in the third column, while excluding any printed text.
 Comments refers to the fourth and final column. Please parse the content in this column as a list of strings, delimited by each subfield in the column.
 Additionally, leave items as None if it is not filled out.
+Right now, look only at the Orientation section of the table. This section checks if the patient knows where they are. The answers are scored as integers. Extract the field name as specified below as dictionary keys, and the integer as the value.
+Disregard the rightmost column, and take only the handwritten integers in the column immediately right of the field specified below.
 
-Header:
-- Date
-- Sex
-
-Orientation
+Orientation fields:
 - Time
 - Personal Information
 - Place
