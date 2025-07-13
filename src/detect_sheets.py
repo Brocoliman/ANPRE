@@ -1,7 +1,12 @@
 import os
 import argparse
 import time
-from table_ocr import get_table, scan
+from table_ocr import scan, get_table
+import glob
+
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 
 def parse_args():
@@ -44,7 +49,7 @@ def clear_pdfdir(path):
 ##############################
 
 
-def segment(
+def detect(
     source_dir: str,
     output_dir: str,
     xl_pth: str,
@@ -57,13 +62,30 @@ def segment(
     # seg_query = ["body1_", "body2_"]
 
     # --------------------------- Set up data ---------------------------
+    if os.path.isfile(source_dir):
+        source_files = [source_dir]
+    else:
+        source_files = glob.glob(os.path.join(source_dir, "*.png"))
 
-    # scan all in the source directory (so make sure only wanted segmentations are there)
-    outputs = scan(source_dir)
+    try:
+        source_files = glob.glob(os.path.join(source_dir, "*.png"))
+        if not source_files:
+            print(f"No PNG files found in {source_dir}")
+            return
+        outputs = scan(source_files)
+        tables = {
+            path: get_table(path, [outs]) for path, outs in zip(source_files, outputs)
+        }
 
-    tables = {path: get_table(path, outs) for path, outs in zip(source_dir, outputs)}
+        for path, table in tables.items():
+            output_file = os.path.join(
+                output_dir, os.path.splitext(os.path.basename(path))[0] + ".csv"
+            )
+            table.to_csv(output_file, index=False)
 
-    print(tables)
+        print(f"[EVENT] Tables saved to {output_dir}")
+    finally:
+        pass
 
     # result = pd.DataFrame(columns=["Left Head", "Left", "Middle", "Right"])
 
@@ -81,6 +103,6 @@ if __name__ == "__main__":
 
     clear_pdfdir(output_dir)
 
-    segment(source_dir, output_dir, xl_pth)
+    detect(source_dir, output_dir, xl_pth)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

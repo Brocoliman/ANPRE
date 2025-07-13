@@ -7,12 +7,24 @@ pipeline = PaddleOCR(
     use_doc_orientation_classify=False,
     use_doc_unwarping=False,
     use_textline_orientation=False,
+    textline_orientation_batch_size=1,
+    text_recognition_batch_size=1,
     device="cpu",
 )
 
 
-def scan(source_dir):
-    return pipeline.predict(source_dir)
+def scan(source_paths):
+    """
+    Function inputs multiple
+    Run OCR one image at a time to avoid internal multiprocessing.
+    """
+    if isinstance(source_paths, str):
+        source_paths = [source_paths]
+
+    results = []
+    print(f"[EVENT] Scanning {source_paths}...")
+    results = pipeline.predict(source_paths)
+    return results
 
 
 def get_table(source_path, outputs):
