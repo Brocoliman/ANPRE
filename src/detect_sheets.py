@@ -1,7 +1,7 @@
 import os
 import argparse
 import time
-from table_ocr import scan, get_table
+from table_ocr import scan, get_table, initialize_pipeline
 
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
@@ -41,6 +41,18 @@ def parse_args():
         default="case_outputs/patient_data.csv",
         help="Path to CSV file with final patient data",
     )
+    parser.add_argument(
+        "--parallel",
+        "--p",
+        action=argparse.BooleanOptionalAction,
+        help="Whether to parallelize OCR processing (on CPU, it seems not to matter)",
+    )
+    parser.add_argument(
+        "--gpu",
+        action=argparse.BooleanOptionalAction,
+        help="Whether to process on GPU or CPU",
+    )
+
     return parser.parse_args()
 
 
@@ -60,21 +72,38 @@ def detect(
     output_dir: str,
     debug_dir: str,
     xl_pth: str,
+    parallel=False,
 ):
     """
     Creates case_outputs/tables/000x.csv of patient records
     """
+    if parallel:
+        # ---------- batch all files in one go ----------
+        # build list of all image paths
+        files = [
+            os.path.join(source_dir, fn)
+            for fn in sorted(os.listdir(source_dir))
+            if fn.lower().endswith((".png", ".jpg", ".jpeg"))
+        ]
 
-    # ---------- Config ----------
-    # seg_query = ["body1_", "body2_"]
+        # run OCR on the entire batch
+        outputs_list = scan(files, debug_dir)
 
-    # --------------------------- Set up data ---------------------------
+        # one table per file
+        for file_path, page_result in zip(files, outputs_list):
+            # wrap single-page result in a list to match get_table signature
+            table = get_table(file_path, [page_result])
 
-    try:
+            output_file = os.path.join(
+                output_dir, os.path.splitext(os.path.basename(file_path))[0] + ".csv"
+            )
+            table.to_csv(output_file, index=False)
+            print(f"[EVENT] Saved table for {os.path.basename(file_path)}")
+    else:
         for fn in os.listdir(source_dir):
             file = os.path.join(source_dir, fn)
             outputs = scan(file, debug_dir)
-            tables = {file: get_table(file, [outputs])}
+            tables = {file: get_table(file, outputs)}
 
             for path, table in tables.items():
                 output_file = os.path.join(
@@ -83,10 +112,6 @@ def detect(
                 table.to_csv(output_file, index=False)
 
             print(f"[EVENT] Tables saved to {output_dir}")
-    finally:
-        pass
-
-    # result = pd.DataFrame(columns=["Left Head", "Left", "Middle", "Right"])
 
 
 ##############################
@@ -100,9 +125,14 @@ if __name__ == "__main__":
     output_dir = args.output
     debug_dir = args.debug
     xl_pth = args.spreadsheet
+    use_parallel = args.parallel
+    use_gpu = args.gpu
+
+    initialize_pipeline(use_gpu)
 
     clear_pdfdir(output_dir)
+    clear_pdfdir(debug_dir)
 
-    detect(source_dir, output_dir, debug_dir, xl_pth)
+    detect(source_dir, output_dir, debug_dir, xl_pth, use_parallel)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

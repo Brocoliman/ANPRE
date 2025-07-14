@@ -3,12 +3,17 @@ from PIL import Image
 import numpy as np
 import pandas as pd
 
-pipeline = PaddleOCR(
-    use_doc_orientation_classify=False,
-    use_doc_unwarping=False,
-    use_textline_orientation=False,
-    device="cpu",
-)
+pipeline = None
+
+
+def initialize_pipeline(gpu):
+    global pipeline
+    pipeline = PaddleOCR(
+        use_doc_orientation_classify=False,
+        use_doc_unwarping=False,
+        use_textline_orientation=False,
+        device="gpu" if gpu else "cpu",
+    )
 
 
 def scan(source_paths, debug_path):
@@ -35,8 +40,7 @@ def get_table(source_path, outputs):
     page_w, _ = img.size
     t1, t2 = 0.675 * page_w, 0.746 * page_w
 
-    # outputs is a list with one PageResult
-    res = outputs[0][0]
+    res = outputs[0]
     j = res.json["res"]
     texts = j["rec_texts"]
     boxes = np.array(j["rec_boxes"])
