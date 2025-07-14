@@ -2,7 +2,6 @@ import os
 import argparse
 import time
 from table_ocr import scan, get_table
-import glob
 
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
@@ -18,7 +17,7 @@ def parse_args():
         "-src",
         "-i",
         type=str,
-        default="case_outputs/seg",
+        default="case_outputs/one",
         help="Path to folder with list of segmented sheets in PNG",
     )
     parser.add_argument(
@@ -62,28 +61,20 @@ def detect(
     # seg_query = ["body1_", "body2_"]
 
     # --------------------------- Set up data ---------------------------
-    if os.path.isfile(source_dir):
-        source_files = [source_dir]
-    else:
-        source_files = glob.glob(os.path.join(source_dir, "*.png"))
 
     try:
-        source_files = glob.glob(os.path.join(source_dir, "*.png"))
-        if not source_files:
-            print(f"No PNG files found in {source_dir}")
-            return
-        outputs = scan(source_files)
-        tables = {
-            path: get_table(path, [outs]) for path, outs in zip(source_files, outputs)
-        }
+        for fn in os.listdir(source_dir):
+            file = os.path.join(source_dir, fn)
+            outputs = scan(file)
+            tables = {file: get_table(file, [outputs])}
 
-        for path, table in tables.items():
-            output_file = os.path.join(
-                output_dir, os.path.splitext(os.path.basename(path))[0] + ".csv"
-            )
-            table.to_csv(output_file, index=False)
+            for path, table in tables.items():
+                output_file = os.path.join(
+                    output_dir, os.path.splitext(os.path.basename(path))[0] + ".csv"
+                )
+                table.to_csv(output_file, index=False)
 
-        print(f"[EVENT] Tables saved to {output_dir}")
+            print(f"[EVENT] Tables saved to {output_dir}")
     finally:
         pass
 
