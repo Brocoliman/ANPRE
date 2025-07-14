@@ -509,7 +509,6 @@ celerybeat.pid
 # Environments
 .env
 .venv
-.v2
 env/
 venv/
 ENV/

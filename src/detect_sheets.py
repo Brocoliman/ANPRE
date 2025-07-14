@@ -3,10 +3,6 @@ import argparse
 import time
 from table_ocr import scan, get_table, initialize_pipeline
 
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
-
 
 def parse_args():
     parser = argparse.ArgumentParser(
