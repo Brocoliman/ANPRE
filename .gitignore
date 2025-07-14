@@ -3,6 +3,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,jupyternotebooks,latex,c,c++
 
 scratch/out/
+output/
 
 # test files
 pytest.xml

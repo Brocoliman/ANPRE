@@ -18,12 +18,14 @@ def scan(source_paths):
     Function inputs multiple
     Run OCR one image at a time to avoid internal multiprocessing.
     """
-    if isinstance(source_paths, str):
-        source_paths = [source_paths]
 
     results = []
     print(f"[EVENT] Scanning {source_paths}...")
     results = pipeline.predict(source_paths)
+    for res in results:
+        res.print()
+        res.save_to_img("output")
+        res.save_to_json("output")
     return results
 
 
@@ -31,12 +33,13 @@ def get_table(source_path, outputs):
     # exactly the same clustering logic you had in get_table,
     # but operating on the `outputs` argument rather than
     # calling pipeline.predict() again.
+
     img = Image.open(source_path)
     page_w, _ = img.size
     t1, t2 = 0.675 * page_w, 0.746 * page_w
 
     # outputs is a list with one PageResult
-    res = outputs[0]
+    res = outputs[0][0]
     j = res.json["res"]
     texts = j["rec_texts"]
     boxes = np.array(j["rec_boxes"])
