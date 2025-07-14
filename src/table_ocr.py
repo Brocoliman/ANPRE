@@ -7,13 +7,11 @@ pipeline = PaddleOCR(
     use_doc_orientation_classify=False,
     use_doc_unwarping=False,
     use_textline_orientation=False,
-    textline_orientation_batch_size=1,
-    text_recognition_batch_size=1,
     device="cpu",
 )
 
 
-def scan(source_paths):
+def scan(source_paths, debug_path):
     """
     Function inputs multiple
     Run OCR one image at a time to avoid internal multiprocessing.
@@ -23,9 +21,8 @@ def scan(source_paths):
     print(f"[EVENT] Scanning {source_paths}...")
     results = pipeline.predict(source_paths)
     for res in results:
-        res.print()
-        res.save_to_img("output")
-        res.save_to_json("output")
+        res.save_to_img(debug_path)
+        res.save_to_json(debug_path)
     return results
 
 

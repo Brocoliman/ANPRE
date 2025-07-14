@@ -28,6 +28,13 @@ def parse_args():
         help="Path to folder with list of csv tables for patient information",
     )
     parser.add_argument(
+        "-debug",
+        "-d",
+        type=str,
+        default="debug/tables",
+        help="Path to folder with debug information for scanning",
+    )
+    parser.add_argument(
         "-spreadsheet",
         "-xl",
         type=str,
@@ -51,6 +58,7 @@ def clear_pdfdir(path):
 def detect(
     source_dir: str,
     output_dir: str,
+    debug_dir: str,
     xl_pth: str,
 ):
     """
@@ -65,7 +73,7 @@ def detect(
     try:
         for fn in os.listdir(source_dir):
             file = os.path.join(source_dir, fn)
-            outputs = scan(file)
+            outputs = scan(file, debug_dir)
             tables = {file: get_table(file, [outputs])}
 
             for path, table in tables.items():
@@ -90,10 +98,11 @@ if __name__ == "__main__":
     args = parse_args()
     source_dir = args.input
     output_dir = args.output
+    debug_dir = args.debug
     xl_pth = args.spreadsheet
 
     clear_pdfdir(output_dir)
 
-    detect(source_dir, output_dir, xl_pth)
+    detect(source_dir, output_dir, debug_dir, xl_pth)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
