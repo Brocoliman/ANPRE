@@ -24,8 +24,13 @@
             "Practical", "Pracctl","Judgment", "Judment",
             "pt",
             "Recall",
-            "Discrimination Index"
-
+            "Discrimination Index",
+            "Faces-Timed"
+        ],
+        "GREEN_KEEP_WORDS": [
+            "average",
+            "avg",
+            "pt"
         ]
     }
 }
