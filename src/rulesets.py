@@ -9,20 +9,28 @@ class RowWiseRule:
     Base class for all cleaning rules. Applies a rule to each row matching the domain.
     """
 
-    def __init__(self, domain: list[str]):
+    def __init__(self, domain: list[str], col: int):
         self.domain = domain  # keyw for rows that should be included in a rule
+        self.col = col
 
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:
         # Iterate with index and row Series
         for idx, row in df.iterrows():
-            # Check domain: match on 'Left' column by default
-            # if domain = ..., then domain is all rows
+            # 1) domain check (on "Left")
             left_val = str(row.get("Left", "")).lower()
-            if self.domain is ... or any(
-                re.search(item, left_val) for item in self.domain
+            if not (
+                self.domain is ...
+                or any(re.search(item, left_val) for item in self.domain)
             ):
-                new_row = self._row_apply(row.copy())
-                df.loc[idx] = new_row
+                continue
+
+            # 2) skip if the target cell is actually NaN
+            if pd.isna(row.iloc[self.col]):
+                continue
+
+            # 3) now we know it's non-null and matches domain
+            new_row = self._row_apply(row.copy())
+            df.loc[idx] = new_row
         return df
 
     def _row_apply(self, row: pd.Series) -> pd.Series:
@@ -35,8 +43,7 @@ class AddSpaces(RowWiseRule):
     """
 
     def __init__(self, domain: list[str], col: int):
-        super().__init__(domain)
-        self.col = col
+        super().__init__(domain, col)
 
     def _row_apply(self, row: pd.Series) -> pd.Series:
         # Extract original text from target column
@@ -57,8 +64,7 @@ class RemoveSymbols(RowWiseRule):
     """
 
     def __init__(self, domain: list[str], col: int, rm: list[str]):
-        super().__init__(domain)
-        self.col = col
+        super().__init__(domain, col)
         self.rm = {ord(c): None for c in rm}
 
     def _row_apply(self, row: pd.Series) -> pd.Series:
@@ -73,7 +79,7 @@ class BiasedSpellCheck(RowWiseRule):
     Spellcheck on a specific column, biased towards favorites.
     Prioritizes a certain list of words (favorites)
     Splits tokens by spaces or (|)
-    Spell checks words with only letters or certain include characters (-)
+    Spell checks words with only letters or certain include characters (and disregards those characters)
     """
 
     def __init__(
@@ -85,8 +91,7 @@ class BiasedSpellCheck(RowWiseRule):
         include: set[str] = [],
         lang: str = "en_US",
     ):
-        super().__init__(domain)
-        self.col = col  # integer index of the column to process
+        super().__init__(domain, col)
         self.favs = set(
             favs
         )  # words to prioritize in spell correct (standard test names etc.)
@@ -100,10 +105,8 @@ class BiasedSpellCheck(RowWiseRule):
             self.d.add_to_session(fav)
 
     def _row_apply(self, row: pd.Series) -> pd.Series:
-        # 1) skip actual NaNs
+        # 1)
         value = row.iloc[self.col]
-        if pd.isna(value):
-            return row
 
         # 2) work with the string
         text = str(value)
@@ -117,8 +120,8 @@ class BiasedSpellCheck(RowWiseRule):
                 continue
 
             # 4) spell check
-            if not self.d.check(token):
-                suggestions = self.d.suggest(token)
+            if not self.d.check(token.translate(self.rm_include)):
+                suggestions = self.d.suggest(token.translate(self.rm_include))
                 # Use first favorite if available
                 for w in suggestions:
                     if w in self.favs:

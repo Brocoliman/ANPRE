@@ -1,9 +1,12 @@
 {
     "SPELLCHECK": {
         "WORD_DELIMITERS": "([|\\s]+)",
-        "INCLUDE": ["-", "(", ")"],
+        "INCLUDE": ["(", ")", "\"", ","],
         "BLUE_KEEP_WORDS": [
-            "(CVLT II Option)",
+            "Weekday", "weekday", "Month","month",
+
+            "CVLT",
+            "WAIS-III",
             "WAIS-IV",
             "WTAR",
             "Rey", "AVLT",
@@ -26,11 +29,18 @@
             "Recall",
             "Discrimination Index",
             "Faces-Timed",
-            "State-Trait"
+            "State-Trait",
+            "Letter-Number",
+            "WRAT-5",
+            "Rey-o",
+            "WMS-III",
+            "WMS-IV",
+            "DRS-2",
+            "Iowa-Chapman"
         ],
         "GREEN_KEEP_WORDS": [
             "premorbid", "Premorbid",
-            "Average",
+            "Average", "AVERAGE",
             "average", "averg", "Averg",
             "avg", "AVG", "Avg",
             "pt", "PT", "TQ", "IQ", "iq"
