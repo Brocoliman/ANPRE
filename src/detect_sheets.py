@@ -145,6 +145,7 @@ def concat(
             patient_csv.to_csv(os.path.join(output_dir, csv_stem), index=False)
         else:
             missing_patients.append(record_id)
+        os.remove(*filenames)
 
     print(f"[REPORT] Data collected for {len(found_patients)} cases")
     print(f"[REPORT] Missing cases for {len(missing_patients)}: {missing_patients} ")

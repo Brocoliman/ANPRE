@@ -25,7 +25,7 @@ In order to scan sheets and enter data into CSV tables, run `detect_sheets.py`:
 
 To process and clean CSV table data, run `postprocessing.py`:
 
-`$ python src/postprocessing.py -i case_outputs/tables -aux case_outputs/tables_concat -o case_outputs/tables_clean`
+`$ python src/postprocessing.py -i case_outputs/tables -o case_outputs/tables_clean`
 
 ## Developer Instructions
 
