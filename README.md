@@ -7,7 +7,25 @@ Below are instructions for installing and using the package as a user and develo
 
 ## User Instructions
 
-Coming in the future
+User should create the default output directories utilized in each processing stage.
+
+`$ mkdir case_outputs case_outputs case_outputs/sheets case_outputs/seg case_outputs/tables case_outputs/tables_concat case_outputs/tables_clean`
+
+First, to extract clinical summary sheet scans from full case files, run `extract_sheets.py`:
+
+`$ python src/extract_sheets.py -i data/full -o case_outputs/sheets -xl case_outputs/patient_data.csv`
+
+Next, to rectify and segment the scans into proper sections, run `segment_sheets.py`:
+
+`$ python src/segment_sheets.py -i case_outputs/sheets -o case_outputs/seg -t templates/spring2025.json`
+
+In order to scan sheets and enter data into CSV tables, run `detect_sheets.py`:
+
+`$ python src/detect_sheets.py -i case_outputs/seg -o case_outputs/tables`
+
+To process and clean CSV table data, run `postprocessing.py`:
+
+`$ python src/postprocessing.py -i case_outputs/tables -aux case_outputs/tables_concat -o case_outputs/tables_clean`
 
 ## Developer Instructions
 
