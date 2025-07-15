@@ -1,0 +1,30 @@
+{
+    "SPELLCHECK": {
+        "WORD_DELIMITERS": "([|\\s]+)",
+        "BLUE_KEEP_WORDS": [
+            "(1—2—3—4 rating)*",
+            "WAIS-IV",
+            "WTAR",
+            "Rey", "AVLT",
+            "quit", "copy",
+            "BVRT", "Older Adults",
+            "II",
+            "Ideational",
+            "Heaton", "Norms",
+            "Corr:",
+            "VOT",
+            "Trailmaking",
+            "LH",
+            "Stroop",
+            "BDI", "SRS",
+            "Iowa",
+            "TOMM",
+            "Identification",
+            "Practical", "Pracctl","Judgment", "Judment",
+            "pt",
+            "Recall",
+            "Discrimination Index"
+
+        ]
+    }
+}

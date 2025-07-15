@@ -1,6 +1,8 @@
 import os
 import argparse
 import time
+from rulesets import BiasedSpellCheck, Cleaner
+import json
 
 
 def parse_args():
@@ -13,20 +15,21 @@ def parse_args():
         "-i",
         type=str,
         default="case_outputs/tables",
-        help="Path to folder with list of csv tables for patient information",
-    )
-    parser.add_argument(
-        "-aux",
-        type=str,
-        default="case_outputs/tables_concat",
-        help="Path to folder with list of csv tables for patient record that are concatenated ",
+        help="Path to folder with list of CSV tables for patient information",
     )
     parser.add_argument(
         "-output",
         "-o",
         type=str,
         default="case_outputs/tables_clean",
-        help="Path to folder with list of cleaned csv tables ",
+        help="Path to folder with list of cleaned CSV tables ",
+    )
+    parser.add_argument(
+        "-rules",
+        "-r",
+        type=str,
+        default="rules/rules.json",
+        help="Path to JSON with rules ",
     )
     parser.add_argument(
         "-spreadsheet",
@@ -49,11 +52,23 @@ def clear_pdfdir(path):
 ##############################
 
 
-def postprocess(
-    source_dir: str,
-    output_dir: str,
-):
-    pass
+def postprocess(source_dir: str, output_dir: str, rules_pth: str):
+    # Open ruleset
+    with open(rules_pth) as f:
+        rules = json.load(f)
+
+    cleaner = Cleaner(
+        [
+            BiasedSpellCheck(
+                ...,
+                1,
+                rules["SPELLCHECK"]["BLUE_KEEP_WORDS"],
+                rules["SPELLCHECK"]["WORD_DELIMITERS"],
+            )
+        ]
+    )
+
+    cleaner.clean(source_dir, output_dir)
 
 
 ##############################
@@ -64,11 +79,11 @@ if __name__ == "__main__":
     start = time.perf_counter()
     args = parse_args()
     source_dir = args.input
-    concat_dir = args.aux
     output_dir = args.output
+    rules_pth = args.rules
     xl_pth = args.spreadsheet
 
     clear_pdfdir(output_dir)
 
-    postprocess(concat_dir, output_dir)
+    postprocess(source_dir, output_dir, rules_pth)
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
