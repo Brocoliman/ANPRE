@@ -10,12 +10,13 @@ class RowWiseRule:
     """
 
     def __init__(self, domain: list[str]):
-        self.domain = domain  # should be lowercase patterns or Ellipsis
+        self.domain = domain  # keyw for rows that should be included in a rule
 
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:
         # Iterate with index and row Series
         for idx, row in df.iterrows():
             # Check domain: match on 'Left' column by default
+            # if domain = ..., then domain is all rows
             left_val = str(row.get("Left", "")).lower()
             if self.domain is ... or any(
                 re.search(item, left_val) for item in self.domain
@@ -28,20 +29,56 @@ class RowWiseRule:
         raise NotImplementedError("Subclasses must implement _row_apply()")
 
 
+class AddSpaces(RowWiseRule):
+    """
+    Add spaces between parentheses and outer words
+    """
+
+    def __init__(self, domain: list[str], col: int):
+        super().__init__(domain)
+        self.col = col
+
+    def _row_apply(self, row: pd.Series) -> pd.Series:
+        # Extract original text from target column
+        text = str(row.iloc[self.col])
+
+        # only if preceding char is [A-Za-z0-9]
+        text = re.sub(r"(?<=[A-Za-z0-9])\(", r" (", text)
+        # only if following char is [A-Za-z0-9]
+        text = re.sub(r"\)(?=[A-Za-z0-9])", r") ", text)
+
+        row.iloc[self.col] = text
+        return row
+
+
 class BiasedSpellCheck(RowWiseRule):
     """
     Spellcheck on a specific column, biased towards favorites.
-    Splits tokens by '|' or spaces, corrects only pure words.
+    Prioritizes a certain list of words (favorites)
+    Splits tokens by spaces or (|)
+    Spell checks words with only letters or certain include characters (-)
     """
 
     def __init__(
-        self, domain, col: int, favs: set[str], delimiters: str, lang: str = "en_US"
+        self,
+        domain: list[str],
+        col: int,
+        favs: set[str],
+        delimiters: str = "([|\\s]+)",
+        include: set[str] = [],
+        lang: str = "en_US",
     ):
         super().__init__(domain)
         self.col = col  # integer index of the column to process
-        self.favs = set(favs)
-        self.delimiters = delimiters
+        self.favs = set(
+            favs
+        )  # words to prioritize in spell correct (standard test names etc.)
+        self.delimiters = delimiters  # regex of delimiters to split token process
+        self.rm_include = {
+            ord(c): None for c in include
+        }  # normally, only purely alpha words are spell-checked, but words with these only these additional characters are considered
         self.d = enchant.Dict(lang)
+
         for fav in self.favs:
             self.d.add_to_session(fav)
 
@@ -49,12 +86,12 @@ class BiasedSpellCheck(RowWiseRule):
         # Extract original text from the target column
         text = str(row.iloc[self.col])
         # Keep delimiters by capturing them
-        parts = re.split(r"([|\s]+)", text)
+        parts = re.split(self.delimiters, text)
         # Only even indices are actual tokens
         for i in range(0, len(parts), 2):
             token = parts[i]
             # needs to be alpha
-            if not token or not token.isalpha():
+            if not token or not token.translate(self.rm_include).isalpha():
                 continue
             # If not recognized
             if not self.d.check(token):

@@ -1,7 +1,7 @@
 import os
 import argparse
 import time
-from rulesets import BiasedSpellCheck, Cleaner
+from rulesets import Cleaner, AddSpaces, BiasedSpellCheck
 import json
 
 
@@ -59,12 +59,13 @@ def postprocess(source_dir: str, output_dir: str, rules_pth: str):
 
     cleaner = Cleaner(
         [
+            AddSpaces(..., 1),
             BiasedSpellCheck(
                 ...,
                 1,
                 rules["SPELLCHECK"]["BLUE_KEEP_WORDS"],
                 rules["SPELLCHECK"]["WORD_DELIMITERS"],
-            )
+            ),
         ]
     )
 
