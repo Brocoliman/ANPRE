@@ -1,8 +1,9 @@
 {
     "SPELLCHECK": {
         "WORD_DELIMITERS": "([|\\s]+)",
+        "INCLUDE": ["-", "(", ")"],
         "BLUE_KEEP_WORDS": [
-            "(1—2—3—4 rating)*",
+            "(CVLT II Option)",
             "WAIS-IV",
             "WTAR",
             "Rey", "AVLT",
