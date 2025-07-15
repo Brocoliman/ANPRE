@@ -60,11 +60,19 @@ def postprocess(source_dir: str, output_dir: str, rules_pth: str):
     cleaner = Cleaner(
         [
             AddSpaces(..., 1),
-            BiasedSpellCheck(
+            BiasedSpellCheck(  # blue
                 ...,
                 1,
                 rules["SPELLCHECK"]["BLUE_KEEP_WORDS"],
                 rules["SPELLCHECK"]["WORD_DELIMITERS"],
+                rules["SPELLCHECK"]["INCLUDE"],
+            ),
+            BiasedSpellCheck(  # green
+                ...,
+                3,
+                rules["SPELLCHECK"]["GREEN_KEEP_WORDS"],
+                rules["SPELLCHECK"]["WORD_DELIMITERS"],
+                rules["SPELLCHECK"]["INCLUDE"],
             ),
         ]
     )

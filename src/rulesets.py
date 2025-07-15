@@ -83,17 +83,23 @@ class BiasedSpellCheck(RowWiseRule):
             self.d.add_to_session(fav)
 
     def _row_apply(self, row: pd.Series) -> pd.Series:
-        # Extract original text from the target column
-        text = str(row.iloc[self.col])
-        # Keep delimiters by capturing them
-        parts = re.split(self.delimiters, text)
-        # Only even indices are actual tokens
-        for i in range(0, len(parts), 2):
+        # 1) skip actual NaNs
+        value = row.iloc[self.col]
+        if pd.isna(value):
+            return row
+
+        # 2) work with the string
+        text = str(value)
+        parts = re.split(self.delimiters, text)  # Keep delimiters by capturing them
+
+        for i in range(0, len(parts), 2):  # Only even indices are actual tokens
             token = parts[i]
-            # needs to be alpha
+
+            # 3) skip empty, purely non-alpha, or the literal "nan"
             if not token or not token.translate(self.rm_include).isalpha():
                 continue
-            # If not recognized
+
+            # 4) spell check
             if not self.d.check(token):
                 suggestions = self.d.suggest(token)
                 # Use first favorite if available
@@ -104,6 +110,7 @@ class BiasedSpellCheck(RowWiseRule):
                 else:
                     token = suggestions[0] if suggestions else token
                 parts[i] = token
+
         # Reassemble and write back
         row.iloc[self.col] = "".join(parts)
         return row
