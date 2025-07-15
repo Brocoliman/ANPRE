@@ -1,7 +1,6 @@
 import os
 import argparse
 import time
-import pandas as pd
 
 
 def parse_args():
@@ -46,45 +45,6 @@ def clear_pdfdir(path):
 
 
 ##############################
-# Concatenate patient records first
-##############################
-
-
-def concat(
-    source_dir: str,
-    output_dir: str,
-    xl_pth: str,
-):
-    # ------------------------ config ----------------------
-    prefixes = ["body1_", "body2_"]  # all need to exist for valid file
-
-    patients = pd.read_csv(xl_pth)
-    found_patients = []
-    missing_patients = []
-
-    # Iterate through each patient
-    for _, row in patients.iterrows():
-        # Get filename
-        record_id = int(row["record_id"])
-        csv_stem = f"{record_id:05d}.csv"
-
-        # See if all of patient's pages (file) exists (each prefix corresp to a page)
-        filenames = [os.path.join(source_dir, prefix + csv_stem) for prefix in prefixes]
-        if all(map(os.path.exists, filenames)):
-            found_patients.append(record_id)
-            # Now concatenate
-            patient_csv = pd.concat(
-                [pd.read_csv(os.path.join(file)) for file in filenames]
-            )
-            patient_csv.to_csv(os.path.join(output_dir, csv_stem), index=False)
-        else:
-            missing_patients.append(record_id)
-
-    print(f"[REPORT] Data collected for {len(found_patients)} cases")
-    print(f"[REPORT] Missing cases for {len(missing_patients)}: {missing_patients} ")
-
-
-##############################
 # Postprocess
 ##############################
 
@@ -110,6 +70,5 @@ if __name__ == "__main__":
 
     clear_pdfdir(output_dir)
 
-    concat(source_dir, concat_dir, xl_pth)
     postprocess(concat_dir, output_dir)
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
