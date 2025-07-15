@@ -25,12 +25,19 @@
             "pt",
             "Recall",
             "Discrimination Index",
-            "Faces-Timed"
+            "Faces-Timed",
+            "State-Trait"
         ],
         "GREEN_KEEP_WORDS": [
-            "average",
-            "avg",
-            "pt"
+            "premorbid", "Premorbid",
+            "Average",
+            "average", "averg", "Averg",
+            "avg", "AVG", "Avg",
+            "pt", "PT", "TQ", "IQ", "iq"
         ]
+    },
+    "RM": {
+        "BLUE_RM_WORDS": [],
+        "GREEN_RM_WORDS": ["$"]
     }
 }

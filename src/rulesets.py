@@ -51,6 +51,23 @@ class AddSpaces(RowWiseRule):
         return row
 
 
+class RemoveSymbols(RowWiseRule):
+    """
+    Remove certain symbols
+    """
+
+    def __init__(self, domain: list[str], col: int, rm: list[str]):
+        super().__init__(domain)
+        self.col = col
+        self.rm = {ord(c): None for c in rm}
+
+    def _row_apply(self, row: pd.Series) -> pd.Series:
+        text = str(row.iloc[self.col])
+        text = text.translate(self.rm)
+        row.iloc[self.col] = text
+        return row
+
+
 class BiasedSpellCheck(RowWiseRule):
     """
     Spellcheck on a specific column, biased towards favorites.
