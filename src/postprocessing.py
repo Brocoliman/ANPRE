@@ -1,7 +1,7 @@
 import os
 import argparse
 import time
-from rulesets import Cleaner, AddSpaces, BiasedSpellCheck
+from rulesets import Cleaner, AddSpaces, BiasedSpellCheck, RemoveSymbols
 import json
 
 
@@ -59,6 +59,8 @@ def postprocess(source_dir: str, output_dir: str, rules_pth: str):
 
     cleaner = Cleaner(
         [
+            RemoveSymbols(..., 1, rules["RM"]["BLUE_RM_WORDS"]),
+            RemoveSymbols(..., 3, rules["RM"]["GREEN_RM_WORDS"]),
             AddSpaces(..., 1),
             BiasedSpellCheck(  # blue
                 ...,
