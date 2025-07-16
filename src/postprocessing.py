@@ -100,6 +100,8 @@ def postprocess(source_dir: str, output_dir: str, debug_dir: str, rules_pth: str
                 rules["EXPECTED_SLASH_FORMAT"]["YELLOW"],
                 2,
                 rules["EXPECTED_SLASH_FORMAT"]["SLASH_REGEX"],
+                True,
+                True,
             ),
         ]
     )
