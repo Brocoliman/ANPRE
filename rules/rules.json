@@ -2,9 +2,8 @@
     "SPELLCHECK": {
         "WORD_DELIMITERS": "([|\\s]+)",
         "INCLUDE": ["(", ")", "\"", ","],
-        "BLUE_KEEP_WORDS": [
+        "BLUE": [
             "Weekday", "weekday", "Month","month",
-
             "CVLT",
             "WAIS-III",
             "WAIS-IV",
@@ -27,7 +26,7 @@
             "Practical", "Pracctl","Judgment", "Judment",
             "pt",
             "Recall",
-            "Discrimination Index",
+            "Discrimination", "Index",
             "Faces-Timed",
             "State-Trait",
             "Letter-Number",
@@ -38,7 +37,7 @@
             "DRS-2",
             "Iowa-Chapman"
         ],
-        "GREEN_KEEP_WORDS": [
+        "GREEN": [
             "premorbid", "Premorbid",
             "Average", "AVERAGE",
             "average", "averg", "Averg",
@@ -47,13 +46,15 @@
         ]
     },
     "RM": {
-        "BLUE_RM_WORDS": [],
-        "GREEN_RM_WORDS": ["$"]
+        "BLUE": [],
+        "GREEN": ["$"]
     },
-    "SUBS": {},
+    "SUBS": {
+        "BLUE": []
+    },
     "EXPECTED_SLASH_FORMAT": {
         "SLASH_REGEX": ["(?:[1li])", "(?=(?:\\s|$))"],
-        "DOMAIN": {
+        "YELLOW": {
             "personal information": "/4",
             "place": "/2",
             "recent presidents": "/6 /7",

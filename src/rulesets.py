@@ -7,9 +7,13 @@ import enchant
 class RowWiseRule:
     """
     Base class for all cleaning rules. Applies a rule to each row matching the domain.
+
+    Args:
+        domain (list[str], dict[str, str], or ...): the set of rows that a rule is applied on, ... if all, otherwise row left name will be passed to _row_apply
+        col (int): the column number that the rule is applied on
     """
 
-    def __init__(self, domain: list[str], col: int):
+    def __init__(self, domain, col: int):
         self.domain = domain  # keyw for rows that should be included in a rule
         self.col = col
 
@@ -39,17 +43,44 @@ class RowWiseRule:
             df.loc[idx] = new_row
         return df
 
-    def _row_apply(self, row: pd.Series) -> pd.Series:
+    def _row_apply(self, *args) -> pd.Series:
         raise NotImplementedError("Subclasses must implement _row_apply()")
+
+
+class Substitutions(RowWiseRule):
+    """
+    Direct substitutions (no conditions)
+    For example, ll -> II as the roman numeral
+
+    Args:
+        subs (dict[str, str]): dictionary of substitutions, is case sensitive, and must be order-agnostic (e.g., no chain substitutions should be expected to work correctly)
+    """
+
+    def __init__(self, domain: ..., col: int, subs: dict[str, str]):
+        super().__init__(domain, col)
+        self.subs = subs
+
+    def _row_apply(self, row: pd.Series) -> pd.Series:
+        text = str(row.iloc[self.col])
+
+        ...
+
+        row.iloc[self.col] = text
+        return row
 
 
 class SlashScores(RowWiseRule):
     """
     Logic check to retrieve slashes (that are likely marked as 1)
     Meant for YELLOW column
+
+    Uses domain as the mapping dictionary due to efficient routing
+
+    Args:
+        slash_regex (tuple[str, str]): contains 1) regex for chars that would treated as slash, 2) regex for prerequisite of making the slash replacement
     """
 
-    def __init__(self, domain: dict[str, str], col: int, slash_regex: str):
+    def __init__(self, domain: dict[str, str], col: int, slash_regex: tuple[str, str]):
         super().__init__(domain, col)
         self.slash_subs, self.slash_condition = slash_regex
 
@@ -75,7 +106,7 @@ class AddSpaces(RowWiseRule):
     Add spaces between parentheses and outer words
     """
 
-    def __init__(self, domain: list[str], col: int):
+    def __init__(self, domain: ..., col: int):
         super().__init__(domain, col)
 
     def _row_apply(self, row: pd.Series) -> pd.Series:
@@ -94,9 +125,12 @@ class AddSpaces(RowWiseRule):
 class RemoveSelectSymbols(RowWiseRule):
     """
     Remove certain symbols
+
+    Args:
+        rm (list[str]): list of characters or substrings that will be removed, is case sensitive
     """
 
-    def __init__(self, domain: list[str], col: int, rm: list[str]):
+    def __init__(self, domain: ..., col: int, rm: list[str]):
         super().__init__(domain, col)
         self.rm = {ord(c): None for c in rm}
 
@@ -112,7 +146,7 @@ class RemoveLogographics(RowWiseRule):
     Remove chinese lettering
     """
 
-    def __init__(self, domain: list[str], col: int):
+    def __init__(self, domain: ..., col: int):
         super().__init__(domain, col)
 
     def _row_apply(self, row: pd.Series) -> pd.Series:
@@ -125,15 +159,19 @@ class RemoveLogographics(RowWiseRule):
 
 class BiasedSpellCheck(RowWiseRule):
     """
-    Spellcheck on a specific column, biased towards favorites.
-    Prioritizes a certain list of words (favorites)
-    Splits tokens by spaces or (|)
-    Spell checks words with only letters or certain include characters (and disregards those characters)
+    Spellcheck on a specific column, biased towards favorites. It prioritizes a certain list of words (favorites)
+    Tokens are first split by spaces or (|), and spell checks words with only letters or certain include characters (and disregards those characters when creating spellcheck suggestions)
+
+    Args:
+        favs (set[str]): set of words that would be prioritized during spellcheck substitution, is case sensitive
+        delimiters (str): regex for spaces or (|), that the row would be split into tokens by
+        include (set[str]): these characters will be excluded when checking that a token is only alpha, and also excluded during spellcheck suggestions
+        lang (str): language for spellcheck
     """
 
     def __init__(
         self,
-        domain: list[str],
+        domain: ...,
         col: int,
         favs: set[str],
         delimiters: str = "([|\\s]+)",
