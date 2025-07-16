@@ -81,24 +81,56 @@ class SlashScores(RowWiseRule):
     Args:
         domain (dict[str, str]): based on given row field name, finds the expected slash tokens present, keys MUST be lowercase
         slash_regex (tuple[str, str]): contains 1) regex for chars that would treated as slash, 2) regex for prerequisite of making the slash replacement
+        do_logic_check (bool): whether to check if number falls in slash range, if not, will mark
     """
 
-    def __init__(self, domain: dict[str, str], col: int, slash_regex: tuple[str, str]):
+    def __init__(
+        self,
+        domain: dict[str, str],
+        col: int,
+        slash_regex: tuple[str, str],
+        do_logic_check=True,
+        do_logic_correct=True,
+    ):
         super().__init__(domain, col)
         self.slash_subs, self.slash_condition = slash_regex
+        self.do_logic_check = do_logic_check
+        self.do_logic_correct = do_logic_correct
 
     def _row_apply(self, row: pd.Series, field: str) -> pd.Series:
         text = str(row.iloc[self.col])
 
         replacements = self.domain[field].split()  # get the slash replacements
         for replacement in replacements:
-            if replacement[0] != "/":
+            slash, max_score = replacement[0], replacement[1:]
+            if slash != "/":
                 raise ValueError("Slash Domain Value Tokens should being with '/'")
             text = re.sub(
-                self.slash_subs + replacement[1:] + self.slash_condition,
-                "/" + replacement[1:],
+                self.slash_subs + max_score + self.slash_condition,
+                "/" + max_score,
                 text,
             )
+
+        for m in re.finditer(r"/(\d+)", text):
+            slash_pos = m.start()  # index of '/'
+            max_score = int(m.group(1))  # number after slash
+
+            # walk left until you hit a space or the start of the string
+            start = slash_pos
+            while start > 0 and text[start - 1] != " ":
+                start -= 1
+
+            score_str = text[start:slash_pos]  # the token before '/'
+            if score_str.isdigit():
+                score = int(score_str)
+                # now you have `score` and `max_score` to do your logic check:
+                if self.do_logic_check and score > max_score:
+                    # e.g. mark invalid ones with an asterisk
+                    text = (
+                        text[1 + slash_pos :]
+                        if self.do_logic_correct
+                        else text[:slash_pos]
+                    ) + f"{text[slash_pos:]} ***"
 
         row.iloc[self.col] = text
         return row
