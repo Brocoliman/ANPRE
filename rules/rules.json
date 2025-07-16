@@ -3,8 +3,8 @@
         "WORD_DELIMITERS": "([|\\s]+)",
         "INCLUDE": ["(", ")", "\"", ","],
         "BLUE": [
-            "Weekday", "weekday", "Month","month",
-            "CVLT",
+            "Weekday", "weekday", "Month","month", "Form", "Form C",
+            "CVLT", "WAIS", "BNL",
             "WAIS-III",
             "WAIS-IV",
             "WTAR",
@@ -19,7 +19,7 @@
             "Trailmaking",
             "LH",
             "Stroop",
-            "BDI", "SRS",
+            "BDI", "SRS", "BDAE",
             "Iowa",
             "TOMM",
             "Identification",
@@ -35,14 +35,17 @@
             "WMS-III",
             "WMS-IV",
             "DRS-2",
-            "Iowa-Chapman"
+            "Iowa-Chapman", "AMSS", "time", "STAI", "BAI", "GDS", "ISPC",
+            "COWA",
+            "Boston", "MOANS", "IGT"
         ],
         "GREEN": [
             "premorbid", "Premorbid",
             "Average", "AVERAGE",
             "average", "averg", "Averg",
             "avg", "AVG", "Avg",
-            "pt", "PT", "TQ", "IQ", "iq"
+            "pt", "PT", "TQ", "IQ", "iq", "WAIS", "BNL", "SS", "time",
+            "Min", "Mild", "Sev", "et", "al", "WNL", "wnl"
         ]
     },
     "RM": {
@@ -51,7 +54,8 @@
     },
     "SUBS": {
         "BLUE": {
-            " ll": " II"
+            " ll": " II",
+            "lowa": "Iowa"
         }
     },
     "EXPECTED_SLASH_FORMAT": {
