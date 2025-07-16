@@ -16,20 +16,26 @@ class RowWiseRule:
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:
         # Iterate with index and row Series
         for idx, row in df.iterrows():
-            # 1) domain check (on "Left")
-            left_val = str(row.get("Left", "")).lower()
-            if not (
-                self.domain is ...
-                or any(re.search(item, left_val) for item in self.domain)
-            ):
-                continue
-
-            # 2) skip if the target cell is actually NaN
+            # 1) skip if the target cell is actually NaN
             if pd.isna(row.iloc[self.col]):
                 continue
 
-            # 3) now we know it's non-null and matches domain
-            new_row = self._row_apply(row.copy())
+            # 2) domain check (on "Left")
+            left_val = str(row.get("Left", "")).lower()
+            # print(left_val)
+            matches = None
+            if self.domain is not ...:
+                matches = [re.search(item.lower(), left_val) for item in self.domain]
+                if not any(matches):
+                    continue
+
+            if matches:
+                match = next((m for m in matches if m), None).group(
+                    0
+                )  # should not be more than one match
+                new_row = self._row_apply(row.copy(), match)
+            else:
+                new_row = self._row_apply(row.copy())
             df.loc[idx] = new_row
         return df
 
@@ -39,21 +45,26 @@ class RowWiseRule:
 
 class SlashScores(RowWiseRule):
     """
-    Logic check to retrieve slashes, mainly from columns:
-    Orientation: Time, Personal Info, Place, Recent Presidents
+    Logic check to retrieve slashes (that are likely marked as 1)
+    Meant for YELLOW column
     """
 
-    def __init__(self, domain: list[str], col: int):
+    def __init__(self, domain: dict[str, str], col: int, slash_regex: str):
         super().__init__(domain, col)
+        self.slash_subs, self.slash_condition = slash_regex
 
-    def _row_apply(self, row: pd.Series) -> pd.Series:
-        # Extract original text from target column
+    def _row_apply(self, row: pd.Series, field: str) -> pd.Series:
         text = str(row.iloc[self.col])
 
-        # only if preceding char is [A-Za-z0-9]
-        text = re.sub(r"(?<=[A-Za-z0-9])\(", r" (", text)
-        # only if following char is [A-Za-z0-9]
-        text = re.sub(r"\)(?=[A-Za-z0-9])", r") ", text)
+        replacements = self.domain[field].split()  # get the slash replacements
+        for replacement in replacements:
+            if replacement[0] != "/":
+                raise ValueError("Slash Domain Value Tokens should being with '/'")
+            text = re.sub(
+                self.slash_subs + replacement[1:] + self.slash_condition,
+                "/" + replacement[1:],
+                text,
+            )
 
         row.iloc[self.col] = text
         return row
