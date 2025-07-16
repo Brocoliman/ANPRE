@@ -2,7 +2,7 @@ import os
 import argparse
 import time
 import pandas as pd
-from table_ocr import ocr, get_table, initialize_pipeline
+from utils.table_ocr import ocr, get_table, initialize_pipeline
 
 
 def parse_args():

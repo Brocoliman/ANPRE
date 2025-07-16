@@ -1,7 +1,7 @@
 import os
 import argparse
 import time
-from rulesets import (
+from utils.rulesets import (
     Cleaner,
     AddSpaces,
     BiasedSpellCheck,
@@ -10,6 +10,7 @@ from rulesets import (
     SlashScores,
     Substitutions,
 )
+from utils.diff import diff_folder
 import json
 
 
@@ -31,6 +32,13 @@ def parse_args():
         type=str,
         default="case_outputs/tables_clean",
         help="Path to folder with list of cleaned CSV tables ",
+    )
+    parser.add_argument(
+        "-debug",
+        "-d",
+        type=str,
+        default="debug/tables_clean",
+        help="Path to folder with debug for showing diff in table cleaning",
     )
     parser.add_argument(
         "-rules",
@@ -60,7 +68,7 @@ def clear_pdfdir(path):
 ##############################
 
 
-def postprocess(source_dir: str, output_dir: str, rules_pth: str):
+def postprocess(source_dir: str, output_dir: str, debug_dir: str, rules_pth: str):
     # Open ruleset
     with open(rules_pth) as f:
         rules = json.load(f)
@@ -98,6 +106,8 @@ def postprocess(source_dir: str, output_dir: str, rules_pth: str):
 
     cleaner.clean(source_dir, output_dir)
 
+    diff_folder(source_dir, output_dir, debug_dir)
+
 
 ##############################
 # Main
@@ -108,10 +118,12 @@ if __name__ == "__main__":
     args = parse_args()
     source_dir = args.input
     output_dir = args.output
+    debug_dir = args.debug
     rules_pth = args.rules
     xl_pth = args.spreadsheet
 
     clear_pdfdir(output_dir)
+    clear_pdfdir(debug_dir)
 
-    postprocess(source_dir, output_dir, rules_pth)
+    postprocess(source_dir, output_dir, debug_dir, rules_pth)
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
