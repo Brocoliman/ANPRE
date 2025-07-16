@@ -37,6 +37,28 @@ class RowWiseRule:
         raise NotImplementedError("Subclasses must implement _row_apply()")
 
 
+class SlashScores(RowWiseRule):
+    """
+    Logic check to retrieve slashes, mainly from columns:
+    Orientation: Time, Personal Info, Place, Recent Presidents
+    """
+
+    def __init__(self, domain: list[str], col: int):
+        super().__init__(domain, col)
+
+    def _row_apply(self, row: pd.Series) -> pd.Series:
+        # Extract original text from target column
+        text = str(row.iloc[self.col])
+
+        # only if preceding char is [A-Za-z0-9]
+        text = re.sub(r"(?<=[A-Za-z0-9])\(", r" (", text)
+        # only if following char is [A-Za-z0-9]
+        text = re.sub(r"\)(?=[A-Za-z0-9])", r") ", text)
+
+        row.iloc[self.col] = text
+        return row
+
+
 class AddSpaces(RowWiseRule):
     """
     Add spaces between parentheses and outer words

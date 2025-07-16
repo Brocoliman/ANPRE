@@ -11,9 +11,9 @@ User should create the default output directories utilized in each processing st
 
 `$ mkdir case_outputs case_outputs case_outputs/sheets case_outputs/seg case_outputs/tables case_outputs/tables_concat case_outputs/tables_clean`
 
-First, to extract clinical summary sheet scans from full case files, run `extract_sheets.py`:
+First, to select clinical summary sheet scans from full case files, run `select_sheets.py`:
 
-`$ python src/extract_sheets.py -i data/full -o case_outputs/sheets -xl case_outputs/patient_data.csv`
+`$ python src/select_sheets.py -i data/full -o case_outputs/sheets -xl case_outputs/patient_data.csv`
 
 Next, to rectify and segment the scans into proper sections, run `segment_sheets.py`:
 

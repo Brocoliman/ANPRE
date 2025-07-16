@@ -15,7 +15,7 @@ CROP_PX = (20, 0, 200, 300)
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Processing tool to extract, anonymize, and then segment patient case sheets for data processing and recording"
+        description="Data collection tool for patient neuropsychological assessment scores"
     )
     parser.add_argument(
         "-input",
@@ -50,7 +50,7 @@ def parse_args():
         "-dpi",
         type=int,
         default=150,
-        help="Loading and processing DPI of PDF for extraction",
+        help="Loading and processing DPI of PDF for selection",
     )
     return parser.parse_args()
 
@@ -126,10 +126,10 @@ def crop_read(
     return matched, img_bgr
 
 
-# ═════════════════════  extract all sheets from a folder of cases  ════════════════
+# ═════════════════════  select sheets from a folder of cases  ════════════════
 
 
-def extract(
+def select(
     source_dir: str,
     output_dir: str,
     debug_dir: str,
@@ -267,7 +267,7 @@ def extract(
 
     # -------- summary ----------------------------------------------------
     elapsed = time.perf_counter() - t0
-    print("\n=== Extraction summary ===")
+    print("\n=== Selection summary ===")
     if not hits:
         print("No pages containing both Benton and Sheet were found.")
     else:
@@ -293,5 +293,5 @@ if __name__ == "__main__":
     clear_pdfdir(output_dir)
     clear_pdfdir(debug_dir)
 
-    extract(source_dir, output_dir, debug_dir, xl_pth, dpi)
+    select(source_dir, output_dir, debug_dir, xl_pth, dpi)
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

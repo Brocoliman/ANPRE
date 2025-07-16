@@ -7,7 +7,7 @@ from table_ocr import scan, get_table, initialize_pipeline
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Processing tool to extract, anonymize, and then segment patient case sheets for data processing and recording"
+        description="Data collection tool for patient neuropsychological assessment scores"
     )
     parser.add_argument(
         "-input",
