@@ -77,6 +77,7 @@ class SlashScores(RowWiseRule):
     Uses domain as the mapping dictionary due to efficient routing
 
     Args:
+        domain (dict[str, str]): based on given row field name, finds the expected slash tokens present, keys MUST be lowercase
         slash_regex (tuple[str, str]): contains 1) regex for chars that would treated as slash, 2) regex for prerequisite of making the slash replacement
     """
 
