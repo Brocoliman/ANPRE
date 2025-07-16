@@ -50,7 +50,9 @@
         "GREEN": ["$"]
     },
     "SUBS": {
-        "BLUE": []
+        "BLUE": {
+            " ll": " II"
+        }
     },
     "EXPECTED_SLASH_FORMAT": {
         "SLASH_REGEX": ["(?:[1li])", "(?=(?:\\s|$))"],
@@ -58,8 +60,8 @@
             "personal information": "/4",
             "place": "/2",
             "recent presidents": "/6 /7",
-            "faces I": "/48",
-            "faces II": "/48",
+            "faces i": "/48",
+            "faces ii": "/48",
             "spatial span": "/32",
             "visual naming": "/60",
             "sentence repetition": "/14",
