@@ -37,7 +37,7 @@ def parse_args():
         "-d",
         type=str,
         default="debug/sheets",
-        help="Path to folder for debugging sheet detection",
+        help="Path to folder for debugging sheet scanning",
     )
     parser.add_argument(
         "-spreadsheet",

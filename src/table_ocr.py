@@ -16,7 +16,7 @@ def initialize_pipeline(gpu):
     )
 
 
-def scan(source_paths, debug_path):
+def ocr(source_paths, debug_path):
     """
     Function inputs multiple
     Run OCR one image at a time to avoid internal multiprocessing.

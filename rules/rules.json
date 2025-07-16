@@ -49,5 +49,30 @@
     "RM": {
         "BLUE_RM_WORDS": [],
         "GREEN_RM_WORDS": ["$"]
+    },
+    "SUBS": {},
+    "EXPECTED_SLASH_FORMAT": {
+        "SLASH_REGEX": ["(?:[1li])", "(?=(?:\\s|$))"],
+        "DOMAIN": {
+            "personal information": "/4",
+            "place": "/2",
+            "recent presidents": "/6 /7",
+            "faces I": "/48",
+            "faces II": "/48",
+            "spatial span": "/32",
+            "visual naming": "/60",
+            "sentence repetition": "/14",
+            "token test": "/44",
+            "reading comprehension": "/18",
+            "aural comprehension": "/18",
+            "boston naming test": "/60",
+            "complex ideational": "/12",
+            "reading sentences": "/10",
+            "iowa-chapman": "/25",
+            "facial recognition": "/54",
+            "judgment of line": "/30",
+            "tomm": "/50"
+        }
+
     }
 }

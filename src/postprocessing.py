@@ -7,6 +7,7 @@ from rulesets import (
     BiasedSpellCheck,
     RemoveSelectSymbols,
     RemoveLogographics,
+    SlashScores,
 )
 import json
 
@@ -84,6 +85,11 @@ def postprocess(source_dir: str, output_dir: str, rules_pth: str):
                 rules["SPELLCHECK"]["GREEN_KEEP_WORDS"],
                 rules["SPELLCHECK"]["WORD_DELIMITERS"],
                 rules["SPELLCHECK"]["INCLUDE"],
+            ),
+            SlashScores(
+                rules["EXPECTED_SLASH_FORMAT"]["DOMAIN"],
+                2,
+                rules["EXPECTED_SLASH_FORMAT"]["SLASH_REGEX"],
             ),
         ]
     )

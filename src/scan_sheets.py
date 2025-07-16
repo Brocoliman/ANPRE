@@ -2,7 +2,7 @@ import os
 import argparse
 import time
 import pandas as pd
-from table_ocr import scan, get_table, initialize_pipeline
+from table_ocr import ocr, get_table, initialize_pipeline
 
 
 def parse_args():
@@ -60,11 +60,11 @@ def clear_pdfdir(path):
 
 
 ##############################
-# Detect text
+# Scan text
 ##############################
 
 
-def detect(
+def scan(
     source_dir: str,
     output_dir: str,
     debug_dir: str,
@@ -84,7 +84,7 @@ def detect(
         ]
 
         # run OCR on the entire batch
-        outputs_list = scan(files, debug_dir)
+        outputs_list = ocr(files, debug_dir)
 
         # one table per file
         for file_path, page_result in zip(files, outputs_list):
@@ -99,7 +99,7 @@ def detect(
     else:
         for fn in os.listdir(source_dir):
             file = os.path.join(source_dir, fn)
-            outputs = scan(file, debug_dir)
+            outputs = ocr(file, debug_dir)
             tables = {file: get_table(file, outputs)}
 
             for path, table in tables.items():
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     clear_pdfdir(output_dir)
     clear_pdfdir(debug_dir)
 
-    detect(source_dir, output_dir, debug_dir, xl_pth, use_parallel)
+    scan(source_dir, output_dir, debug_dir, xl_pth, use_parallel)
     concat(output_dir, output_dir, xl_pth)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

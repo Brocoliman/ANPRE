@@ -19,9 +19,9 @@ Next, to rectify and segment the scans into proper sections, run `segment_sheets
 
 `$ python src/segment_sheets.py -i case_outputs/sheets -o case_outputs/seg -t templates/spring2025.json`
 
-In order to scan sheets and enter data into CSV tables, run `detect_sheets.py`:
+In order to scan sheets and enter data into CSV tables, run `scan_sheets.py`:
 
-`$ python src/detect_sheets.py -i case_outputs/seg -o case_outputs/tables`
+`$ python src/scan_sheets.py -i case_outputs/seg -o case_outputs/tables`
 
 To process and clean CSV table data, run `postprocessing.py`:
 
