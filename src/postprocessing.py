@@ -8,6 +8,7 @@ from rulesets import (
     RemoveSelectSymbols,
     RemoveLogographics,
     SlashScores,
+    Substitutions,
 )
 import json
 
@@ -66,28 +67,29 @@ def postprocess(source_dir: str, output_dir: str, rules_pth: str):
 
     cleaner = Cleaner(
         [
-            RemoveSelectSymbols(..., 1, rules["RM"]["BLUE_RM_WORDS"]),
-            RemoveSelectSymbols(..., 3, rules["RM"]["GREEN_RM_WORDS"]),
+            RemoveSelectSymbols(..., 1, rules["RM"]["BLUE"]),
+            RemoveSelectSymbols(..., 3, rules["RM"]["GREEN"]),
             RemoveLogographics(..., 1),
             RemoveLogographics(..., 2),
             RemoveLogographics(..., 3),
+            Substitutions(..., 1, rules["SUBS"]["BLUE"]),
             AddSpaces(..., 1),
             BiasedSpellCheck(  # blue
                 ...,
                 1,
-                rules["SPELLCHECK"]["BLUE_KEEP_WORDS"],
+                rules["SPELLCHECK"]["BLUE"],
                 rules["SPELLCHECK"]["WORD_DELIMITERS"],
                 rules["SPELLCHECK"]["INCLUDE"],
             ),
             BiasedSpellCheck(  # green
                 ...,
                 3,
-                rules["SPELLCHECK"]["GREEN_KEEP_WORDS"],
+                rules["SPELLCHECK"]["GREEN"],
                 rules["SPELLCHECK"]["WORD_DELIMITERS"],
                 rules["SPELLCHECK"]["INCLUDE"],
             ),
             SlashScores(
-                rules["EXPECTED_SLASH_FORMAT"]["DOMAIN"],
+                rules["EXPECTED_SLASH_FORMAT"]["YELLOW"],
                 2,
                 rules["EXPECTED_SLASH_FORMAT"]["SLASH_REGEX"],
             ),
