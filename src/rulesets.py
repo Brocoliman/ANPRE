@@ -63,7 +63,9 @@ class Substitutions(RowWiseRule):
     def _row_apply(self, row: pd.Series) -> pd.Series:
         text = str(row.iloc[self.col])
 
-        ...
+        keys = sorted(self.subs, key=len, reverse=True)
+        pattern = re.compile("|".join(re.escape(k) for k in keys))
+        text = pattern.sub(lambda m: self.subs[m.group(0)], text)
 
         row.iloc[self.col] = text
         return row
