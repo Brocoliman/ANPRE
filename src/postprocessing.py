@@ -85,14 +85,14 @@ def postprocess(source_dir: str, output_dir: str, debug_dir: str, rules_pth: str
             BiasedSpellCheck(  # blue
                 ...,
                 1,
-                rules["SPELLCHECK"]["BLUE"],
+                rules["SPELLCHECK"]["BLUE"] + rules["SPELLCHECK"]["GREEN"],
                 rules["SPELLCHECK"]["WORD_DELIMITERS"],
                 rules["SPELLCHECK"]["INCLUDE"],
             ),
             BiasedSpellCheck(  # green
                 ...,
                 3,
-                rules["SPELLCHECK"]["GREEN"],
+                rules["SPELLCHECK"]["BLUE"] + rules["SPELLCHECK"]["GREEN"],
                 rules["SPELLCHECK"]["WORD_DELIMITERS"],
                 rules["SPELLCHECK"]["INCLUDE"],
             ),
