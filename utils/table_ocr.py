@@ -62,18 +62,18 @@ def get_table(source_path, outputs):
     # build table
     table = []
     for row in rows:
-        cells = {"Left Head": None, "Left": [], "Middle": [], "Right": []}
+        cells = {"head": None, "test_info": [], "raw_score": [], "comments": []}
         for k in sorted(row, key=lambda k: x_centers[k]):
             txt = texts[k]
             xc = x_centers[k]
             if xc < t1:
-                cells["Left"].append(txt)
+                cells["test_info"].append(txt)
             elif xc < t2:
-                cells["Middle"].append(txt)
+                cells["raw_score"].append(txt)
             else:
-                cells["Right"].append(txt)
-        for col in ("Left", "Middle", "Right"):
+                cells["comments"].append(txt)
+        for col in ("test_info", "raw_score", "comments"):
             cells[col] = "|".join(cells[col]) if cells[col] else ""
         table.append(cells)
 
-    return pd.DataFrame(table, columns=["Left Head", "Left", "Middle", "Right"])
+    return pd.DataFrame(table, columns=["head", "test_info", "raw_score", "comments"])
