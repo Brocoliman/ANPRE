@@ -178,7 +178,7 @@ class RemoveParentheses(RowWiseRule):
             for token in tokens
         ]
 
-        text = "".join(tokens)
+        text = "|".join(tokens)
 
         row.iloc[self.col] = text
         return row
