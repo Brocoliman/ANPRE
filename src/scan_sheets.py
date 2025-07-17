@@ -14,7 +14,7 @@ def parse_args():
         "-src",
         "-i",
         type=str,
-        default="case_outputs/one",
+        default="case_outputs/seg",
         help="Path to folder with list of segmented sheets in PNG",
     )
     parser.add_argument(
@@ -136,6 +136,7 @@ def concat(
 
         # See if all of patient's pages (file) exists (each prefix corresp to a page)
         filenames = [os.path.join(source_dir, prefix + csv_stem) for prefix in prefixes]
+
         if all(map(os.path.exists, filenames)):
             found_patients.append(record_id)
             # Now concatenate
@@ -145,7 +146,11 @@ def concat(
             patient_csv.to_csv(os.path.join(output_dir, csv_stem), index=False)
         else:
             missing_patients.append(record_id)
-        os.remove(*filenames)
+        for fn in filenames:
+            try:
+                os.remove(fn)
+            except FileNotFoundError:
+                pass
 
     print(f"[REPORT] Data collected for {len(found_patients)} cases")
     print(f"[REPORT] Missing cases for {len(missing_patients)}: {missing_patients} ")
