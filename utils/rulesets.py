@@ -160,6 +160,30 @@ class AddSpaces(RowWiseRule):
         return row
 
 
+class RemoveParentheses(RowWiseRule):
+    """
+    Remove parentheses that wrap around entire test name
+    Meant for blue column only
+    """
+
+    def __init__(self, domain: ..., col: int):
+        super().__init__(domain, col)
+
+    def _row_apply(self, row: pd.Series) -> pd.Series:
+        text = str(row.iloc[self.col])
+
+        tokens = text.split("|")
+        tokens = [
+            token[1:].replace(")", "") if token.startswith("(") else token
+            for token in tokens
+        ]
+
+        text = "".join(tokens)
+
+        row.iloc[self.col] = text
+        return row
+
+
 class RemoveSelectSymbols(RowWiseRule):
     """
     Remove certain symbols
