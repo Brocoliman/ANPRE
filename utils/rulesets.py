@@ -153,6 +153,9 @@ class AddSpaces(RowWiseRule):
         # only if following char is [A-Za-z0-9]
         text = re.sub(r"\)(?=[A-Za-z0-9])", r") ", text)
 
+        text = re.sub(r"(?<!^)\#", r" #", text)
+        text = re.sub(r"\#(?!$)", r"# ", text)
+
         row.iloc[self.col] = text
         return row
 
