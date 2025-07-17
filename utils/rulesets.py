@@ -25,7 +25,7 @@ class RowWiseRule:
                 continue
 
             # 2) domain check (on "Left")
-            left_val = str(row.get("Left", "")).lower()
+            left_val = str(row.get("test_info", "")).lower()
             # print(left_val)
             matches = None
             if self.domain is not ...:
