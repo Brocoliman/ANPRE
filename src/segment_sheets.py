@@ -47,7 +47,7 @@ def parse_args():
         "-template",
         "-t",
         type=str,
-        default="templates/spring2025.json",
+        default="instructions/seg_template.json",
         help="Path to sheet template file",
     )
     parser.add_argument(

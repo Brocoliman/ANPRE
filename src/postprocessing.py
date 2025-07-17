@@ -44,7 +44,7 @@ def parse_args():
         "-rules",
         "-r",
         type=str,
-        default="rules/rules.json",
+        default="instructions/rules.json",
         help="Path to JSON with rules ",
     )
     parser.add_argument(
