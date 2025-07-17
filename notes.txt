@@ -1,4 +1,0 @@
-
-
-Remove parentheses (both open and close) in blue column if it is at the start
-# for finding field labels, the field label must be at the start of a token
