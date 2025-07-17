@@ -1,12 +1,12 @@
 {
-    "Orientation": [
+    "ORIENTATION": [
         "Time",
         "Personal Information",
         "Place",
         "Recent Presidents",
         "Recent News"
     ],
-    "Intellect": {
+    "INTELLECT": {
         "WAIS-IV": [
             "Similarities",
             "Comprehension",
@@ -56,7 +56,7 @@
             "Math Computation"
         ]
     },
-    "Memory": {
+    "MEMORY": {
         "Rey AVLT": [
             "Immediate Recall",
             "Learning Over Trials",
@@ -102,7 +102,7 @@
 
         "DRS-2": []
     },
-    "Speech & Language": {
+    "SPEECH & LANGUAGE": {
         "Writing Samples": [],
         "Multilingual Aphasia Exam": [
             "COWA",
@@ -122,23 +122,23 @@
         "Proper Naming": [],
         "SWIFT": []
     },
-    "Visual Perception": [
+    "VISUAL PERCEPTION": [
         "Facial Recognition",
         "Judgment of Line Orientation",
         "Hooper VOT"
     ],
-    "Visual Construction": [
+    "VISUAL CONSTRUCTION": [
         "Clock Drawing",
         "Grooved Pegboard Test"
     ],
-    "Executive Function": {
+    "EXECUTIVE FUNCTION": {
         "Trailmaking Test": [],
         "Wisconsin Card Sorting Test": [],
         "Cats": [],
         "Stroop Test": ["Word"],
         "IGT": []
     },
-    "Mood": [
+    "MOOD": [
         "Beck Depression Inventory",
         "Beck Anxiety Inventory",
         "Geriatric Depression Scale",
@@ -149,7 +149,7 @@
         "SIMS",
         "PCL-5"
     ],
-    "Miscellaneous": [
+    "MISC": [
         "Smell Identification Test"
     ]
 }
