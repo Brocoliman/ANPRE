@@ -158,7 +158,7 @@ def select(
 
     filenames = source_dir.iterdir()
 
-    # Contains record_id, new filename, other fields not added yet
+    # Contains patient_id, new filename, other fields not added yet
     prelim_datalist = []
 
     w_pt = (CROP_PX[2] - CROP_PX[0]) * 72 / BASE_DPI
@@ -225,7 +225,7 @@ def select(
 
             prelim_datalist.append(
                 [
-                    idx,  # record_id
+                    idx,  # patient_id
                     new_filename,  # filename
                     None,  # format (will have to be determined)
                     lastname,  # lastname
@@ -249,7 +249,7 @@ def select(
 
     # Save to excel
     col_names = [
-        "record_id",  # not mrn
+        "patient_id",  # not mrn
         "filename",
         "format",
         "lastname",
