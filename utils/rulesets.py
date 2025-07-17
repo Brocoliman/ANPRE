@@ -130,7 +130,7 @@ class SlashScores(RowWiseRule):
                         text[1 + slash_pos :]
                         if self.do_logic_correct
                         else text[:slash_pos]
-                    ) + f"{text[slash_pos:]} ***"
+                    ) + f"{text[slash_pos:]}"
 
         row.iloc[self.col] = text
         return row
