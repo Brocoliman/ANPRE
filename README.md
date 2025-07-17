@@ -9,7 +9,7 @@ Below are instructions for installing and using the package as a user and develo
 
 User should create the default output directories utilized in each processing stage.
 
-`$ mkdir case_outputs case_outputs case_outputs/sheets case_outputs/seg case_outputs/tables case_outputs/tables_concat case_outputs/tables_clean`
+`$ mkdir case_outputs case_outputs case_outputs/sheets case_outputs/seg case_outputs/tables case_outputs/tables_clean`
 
 First, to select clinical summary sheet scans from full case files, run `select_sheets.py`:
 
