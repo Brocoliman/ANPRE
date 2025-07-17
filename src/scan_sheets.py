@@ -36,7 +36,7 @@ def parse_args():
         "-xl",
         type=str,
         default="case_outputs/patient_data.csv",
-        help="Path to CSV file with final patient data",
+        help="Path to CSV file with patient info",
     )
     parser.add_argument(
         "--parallel",

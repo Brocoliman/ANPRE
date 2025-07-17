@@ -34,14 +34,14 @@ def parse_args():
         "-xl",
         type=str,
         default="case_outputs/patient_data.csv",
-        help="Path to CSV file with final patient data",
+        help="Path to CSV file with patient info",
     )
     parser.add_argument(
         "-fields",
         "-f",
         type=str,
         default="instructions/field_labels.json",
-        help="Path to CSV file with final patient data",
+        help="Path to CSV file with all test names in tree structure",
     )
 
     return parser.parse_args()
