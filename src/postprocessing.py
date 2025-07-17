@@ -9,6 +9,7 @@ from utils.rulesets import (
     RemoveLogographics,
     SlashScores,
     Substitutions,
+    RemoveParentheses,
 )
 from utils.diff import diff_folder
 import json
@@ -80,6 +81,7 @@ def postprocess(source_dir: str, output_dir: str, debug_dir: str, rules_pth: str
             RemoveLogographics(..., 1),
             RemoveLogographics(..., 2),
             RemoveLogographics(..., 3),
+            RemoveParentheses(..., 1),
             Substitutions(..., 1, rules["SUBS"]["BLUE"]),
             AddSpaces(..., 1),
             BiasedSpellCheck(  # blue
