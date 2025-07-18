@@ -151,7 +151,7 @@ def package(
         for field in flatten_labels(json.loads(fl_pth.read_text()), blanks=False)
     ]
 
-    for patient_fn in source_dir.iterdir():
+    for patient_fn in sorted(source_dir.iterdir()):
         fieldlabels1 = fieldlabels1_base.copy()
 
         # Get patient
