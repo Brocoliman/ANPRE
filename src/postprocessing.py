@@ -84,10 +84,6 @@ def postprocess(
     with open(rules_pth) as f:
         rules = json.load(f)
 
-    # Add all known test names to biased spell check
-    with open(fl_pth) as f:
-        rules = json.load(f)
-
     cleaner = Cleaner(
         [
             Remove(..., 1, rules["RM"]["BLUE"]),
