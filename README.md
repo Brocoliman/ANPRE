@@ -13,7 +13,7 @@ User should create the default output directories utilized in each processing st
 
 First, to select clinical summary sheet scans from full case files, run `select_sheets.py`:
 
-`$ python -m src.select_sheets -i data/full -o case_outputs/sheets -xl case_outputs/patient_data.csv`
+`$ python -m src.select_sheets -i data/full -o case_outputs/sheets -xl case_outputs/patient_info.csv`
 
 Next, to rectify and segment the scans into proper sections, run `segment_sheets.py`:
 

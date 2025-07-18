@@ -52,7 +52,7 @@ def parse_args():
         "-spreadsheet",
         "-xl",
         type=str,
-        default="case_outputs/patient_data.csv",
+        default="case_outputs/patient_info.csv",
         help="Path to CSV file with final patient data",
     )
     return parser.parse_args()

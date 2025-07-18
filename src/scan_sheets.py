@@ -35,7 +35,7 @@ def parse_args():
         "-spreadsheet",
         "-xl",
         type=str,
-        default="case_outputs/patient_data.csv",
+        default="case_outputs/patient_info.csv",
         help="Path to CSV file with patient info",
     )
     parser.add_argument(
