@@ -138,7 +138,7 @@ class SlashScores(RowWiseRule):
 
 class AddSpaces(RowWiseRule):
     """
-    Add spaces between parentheses and outer words
+    Add spaces between parentheses and outer words, and also around hash signs
     """
 
     def __init__(self, domain: ..., col: int):
