@@ -5,11 +5,12 @@ from utils.rulesets import (
     Cleaner,
     AddSpaces,
     BiasedSpellCheck,
-    RemoveSelectSymbols,
+    Remove,
     RemoveLogographicUnicodes,
     SlashScores,
     Substitutions,
     ManageWrappingParentheses,
+    CleanAlphaNumericalUnicodes,
 )
 from utils.diff import diff_folder
 import json
@@ -49,6 +50,13 @@ def parse_args():
         help="Path to JSON with rules ",
     )
     parser.add_argument(
+        "-fields",
+        "-f",
+        type=str,
+        default="instructions/field_labels.json",
+        help="Path to CSV file with all test names in tree structure",
+    )
+    parser.add_argument(
         "-spreadsheet",
         "-xl",
         type=str,
@@ -69,19 +77,28 @@ def clear_pdfdir(path):
 ##############################
 
 
-def postprocess(source_dir: str, output_dir: str, debug_dir: str, rules_pth: str):
+def postprocess(
+    source_dir: str, output_dir: str, debug_dir: str, rules_pth: str, fl_pth: str
+):
     # Open ruleset
     with open(rules_pth) as f:
         rules = json.load(f)
 
+    # Add all known test names to biased spell check
+    with open(fl_pth) as f:
+        rules = json.load(f)
+
     cleaner = Cleaner(
         [
-            RemoveSelectSymbols(..., 1, rules["RM"]["BLUE"]),
-            RemoveSelectSymbols(..., 3, rules["RM"]["GREEN"]),
+            Remove(..., 1, rules["RM"]["BLUE"]),
+            Remove(..., 3, rules["RM"]["GREEN"]),
             RemoveLogographicUnicodes(..., 1),
             RemoveLogographicUnicodes(..., 2),
             RemoveLogographicUnicodes(..., 3),
             ManageWrappingParentheses(..., 1),
+            CleanAlphaNumericalUnicodes(..., 1),
+            CleanAlphaNumericalUnicodes(..., 2),
+            CleanAlphaNumericalUnicodes(..., 3),
             Substitutions(..., 1, rules["SUBS"]["BLUE"]),
             AddSpaces(..., 1),
             BiasedSpellCheck(  # blue
@@ -124,10 +141,11 @@ if __name__ == "__main__":
     output_dir = args.output
     debug_dir = args.debug
     rules_pth = args.rules
+    fl_pth = args.fields
     xl_pth = args.spreadsheet
 
     clear_pdfdir(output_dir)
     clear_pdfdir(debug_dir)
 
-    postprocess(source_dir, output_dir, debug_dir, rules_pth)
+    postprocess(source_dir, output_dir, debug_dir, rules_pth, fl_pth)
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
