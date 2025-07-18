@@ -16,12 +16,11 @@ def flatten_labels(label_tree, blanks=True):
                     flat.append((category, t))
         else:  # dict
             for test_name, subs in tests.items():
+                if blanks:
+                    flat.append((category, test_name, ""))
+                else:
+                    flat.append((category, test_name))
                 if subs:
                     for sub in subs:
                         flat.append((category, test_name, sub))
-                else:
-                    if blanks:
-                        flat.append((category, test_name, ""))
-                    else:
-                        flat.append((category, test_name))
     return flat

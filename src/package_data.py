@@ -151,10 +151,14 @@ def package(
                     X = patient_csv.iloc[idx1]["test_info"]
                     Y0 = Y[0].upper()
                     flag = "CATEG"
-                else:  # if tname, just check with lower
+                elif len(Y) == 2:  # if test
                     X = patient_csv.iloc[idx1]["test_info"].lower()
-                    Y0 = Y[-1].lower()
+                    Y0 = Y[1].lower()
                     flag = "TNAME"
+                else:  # if subtest, just check with lower
+                    X = patient_csv.iloc[idx1]["test_info"].lower()
+                    Y0 = Y[2].lower()
+                    flag = "STNAME"
 
                 # Check if field is in the patient row
                 if Y0 in X:
@@ -201,6 +205,7 @@ def package(
     # ---------------------- setup: create xlsx file -------------
 
     fieldlabels2 = flatten_labels(json.loads(fl_pth.read_text()))
+    print(*fieldlabels2, sep="\n")
     multi_cols = pd.MultiIndex.from_tuples(
         fieldlabels2, names=["Category", "Test", "Subtest"]
     )
