@@ -131,21 +131,21 @@ def concat(
     # Iterate through each patient
     for _, row in patients.iterrows():
         # Get filename
-        record_id = int(row["record_id"])
-        csv_stem = f"{record_id:05d}.csv"
+        patient_id = int(row["patient_id"])
+        csv_stem = f"{patient_id:05d}.csv"
 
         # See if all of patient's pages (file) exists (each prefix corresp to a page)
         filenames = [os.path.join(source_dir, prefix + csv_stem) for prefix in prefixes]
 
         if all(map(os.path.exists, filenames)):
-            found_patients.append(record_id)
+            found_patients.append(patient_id)
             # Now concatenate
             patient_csv = pd.concat(
                 [pd.read_csv(os.path.join(file)) for file in filenames]
             )
             patient_csv.to_csv(os.path.join(output_dir, csv_stem), index=False)
         else:
-            missing_patients.append(record_id)
+            missing_patients.append(patient_id)
         for fn in filenames:
             try:
                 os.remove(fn)
