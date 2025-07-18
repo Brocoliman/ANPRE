@@ -43,7 +43,7 @@
             "premorbid", "Premorbid",
             "Average", "AVERAGE",
             "average", "averg", "Averg",
-            "avg", "AVG", "Avg",
+            "avg", "AVG", "Avg", "Below", "below", "Above", "above",
             "pt", "PT", "TQ", "IQ", "iq", "WAIS", "BNL", "SS", "time",
             "Min", "Mild", "Sev", "et", "al", "WNL", "wnl"
         ]
