@@ -184,7 +184,7 @@ class RemoveParentheses(RowWiseRule):
         return row
 
 
-class RemoveSelectSymbols(RowWiseRule):
+class RemoveSelectSymbols(Substitutions):
     """
     Remove certain symbols
 
@@ -203,7 +203,7 @@ class RemoveSelectSymbols(RowWiseRule):
         return row
 
 
-class RemoveLogographics(RowWiseRule):
+class RemoveLogographicUnicodes(RowWiseRule):
     """
     Remove chinese lettering
     """
@@ -297,7 +297,8 @@ class Cleaner:
         source_dir = Path(source_dir)
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
-        for csv_path in source_dir.iterdir():
+        for csv_path in sorted(source_dir.iterdir()):
+            print(f"[Event] Cleaning {csv_path}")
             if csv_path.suffix.lower() != ".csv":
                 continue
             df = pd.read_csv(csv_path)
