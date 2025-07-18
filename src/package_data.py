@@ -236,6 +236,10 @@ def package(
     n_patients = len(patient_ids)
     data = np.empty((n_patients * 3, len(multi_cols)), dtype=object)
 
+    thres_low, thres_mid = 0.7, 0.9
+    low_conf_cells = []
+    mid_conf_cells = []
+
     # ---------------------- build: fill patients -------------
 
     for p_idx, patient_csv in enumerate(patient_csvs):
@@ -244,15 +248,42 @@ def package(
         for fl_idx, patient_row_idx in patient_map:
             if patient_row_idx is None:
                 continue
-            data[base, fl_idx] = patient_csv.iloc[patient_row_idx][
-                "raw_score"
-            ]  # raw_score
-            data[base + 1, fl_idx] = patient_csv.iloc[patient_row_idx][
-                "comments"
-            ]  # comments
-            data[base + 2, fl_idx] = patient_csv.iloc[patient_row_idx][
-                "test_info"
-            ]  # test_info
+
+            # Get the full row from the source CSV to access conf scores
+            source_row = patient_csv.iloc[patient_row_idx]
+
+            # Helper to check confidence and store cell coordinates
+            def check_confidence(conf_str, df_row_idx, df_col_idx):
+                if not conf_str:
+                    return
+                try:
+                    conf_val = float(conf_str)
+                    # Excel row = DataFrame row + 3 header rows (for column MultiIndex)
+                    # Excel col = DataFrame col + 2 index cols (for row MultiIndex)
+                    excel_r = df_row_idx + 4
+                    excel_c = df_col_idx + 2
+
+                    if conf_val < thres_low:
+                        low_conf_cells.append((excel_r, excel_c))
+                    elif conf_val < thres_mid:
+                        mid_conf_cells.append((excel_r, excel_c))
+                except (ValueError, TypeError):
+                    pass  # Ignore non-numeric confidence values
+
+            # ------------------ RAW SCORE ------------------
+            df_row_idx_raw = base
+            data[df_row_idx_raw, fl_idx] = source_row["raw_score"]
+            check_confidence(source_row.get("raw_score_conf"), df_row_idx_raw, fl_idx)
+
+            # ------------------ COMMENTS -------------------
+            df_row_idx_comm = base + 1
+            data[df_row_idx_comm, fl_idx] = source_row["comments"]
+            check_confidence(source_row.get("comments_conf"), df_row_idx_comm, fl_idx)
+
+            # ------------------ TEST-INFO ------------------
+            df_row_idx_info = base + 2
+            data[df_row_idx_info, fl_idx] = source_row["test_info"]
+            check_confidence(source_row.get("test_info_conf"), df_row_idx_info, fl_idx)
 
     # ---------------------- wrap final excel  -------------
 
@@ -276,6 +307,36 @@ def package(
         ws.set_column(
             first_col=0, last_col=len(df.columns) - 1, width=12
         )  # uniform width (or auto-fit loop)
+
+        wb = writer.book
+        low_conf_format = wb.add_format(
+            {
+                "bg_color": "#EF5567",
+            }
+        )
+        mid_conf_format = wb.add_format(
+            {
+                "bg_color": "#FFEE6D",
+            }
+        )
+
+        for r, c in low_conf_cells:
+            # Map Excel coordinates back to the numpy array's index
+            df_row = r - 4
+            df_col = c - 2
+            # Get the original value
+            value = data[df_row, df_col]
+            # Write the value AND the format
+            ws.write(r, c, value, low_conf_format)
+
+        for r, c in mid_conf_cells:
+            # Map Excel coordinates back to the numpy array's index
+            df_row = r - 4
+            df_col = c - 2
+            # Get the original value
+            value = data[df_row, df_col]
+            # Write the value AND the format
+            ws.write(r, c, value, mid_conf_format)
 
 
 ##############################
