@@ -97,7 +97,7 @@ def scan(
             table.to_csv(output_file, index=False)
             print(f"[EVENT] Saved table for {os.path.basename(file_path)}")
     else:
-        for fn in os.listdir(source_dir):
+        for fn in sorted(os.listdir(source_dir)):
             file = os.path.join(source_dir, fn)
             outputs = ocr(file, debug_dir)
             tables = {file: get_table(file, outputs)}

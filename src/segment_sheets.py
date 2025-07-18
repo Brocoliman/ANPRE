@@ -269,7 +269,7 @@ def segment(
     # ═══════════ processing ════════════════════════════════════
     source_dir = Path(source_dir)
     output_dir = Path(output_dir)
-    filenames = source_dir.iterdir()
+    filenames = sorted(source_dir.iterdir())
 
     for filename in filenames:
         if not filename.is_file():

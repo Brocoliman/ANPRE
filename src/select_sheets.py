@@ -156,7 +156,7 @@ def select(
     debug_dir = Path(debug_dir)
     xl_pth = Path(xl_pth)
 
-    filenames = source_dir.iterdir()
+    filenames = sorted(source_dir.iterdir())
 
     # Contains patient_id, new filename, other fields not added yet
     prelim_datalist = []
