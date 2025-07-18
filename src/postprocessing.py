@@ -1,6 +1,9 @@
 import os
 import argparse
 import time
+import json
+from pathlib import Path
+
 from utils.rulesets import (
     Cleaner,
     AddSpaces,
@@ -13,7 +16,7 @@ from utils.rulesets import (
     CleanAlphaNumericalUnicodes,
 )
 from utils.diff import diff_folder
-import json
+from utils.flatten_labels import flatten_labels
 
 
 def parse_args():
@@ -84,6 +87,17 @@ def postprocess(
     with open(rules_pth) as f:
         rules = json.load(f)
 
+    # Add all known field labels to biased spell check
+    fl_pth = Path(fl_pth)
+    fl_flat = flatten_labels(json.loads(fl_pth.read_text()), blanks=False)
+    fls = [item[-1] for item in fl_flat]  # take the most specific field label
+    fls = [fl_token for fl in fls for fl_token in fl.split()]
+    fls = (
+        [fl.upper() for fl in fls]
+        + [fl.lower() for fl in fls]
+        + [fl.capitalize() for fl in fls]
+    )
+
     cleaner = Cleaner(
         [
             Remove(..., 1, rules["RM"]["BLUE"]),
@@ -100,7 +114,7 @@ def postprocess(
             BiasedSpellCheck(  # blue
                 ...,
                 1,
-                rules["SPELLCHECK"]["BLUE"] + rules["SPELLCHECK"]["GREEN"],
+                rules["SPELLCHECK"]["BLUE"] + rules["SPELLCHECK"]["GREEN"] + fls,
                 rules["SPELLCHECK"]["WORD_DELIMITERS"],
                 rules["SPELLCHECK"]["INCLUDE"],
             ),
