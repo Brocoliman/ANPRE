@@ -17,7 +17,7 @@ First, to select clinical summary sheet scans from full case files, run `select_
 
 Next, to rectify and segment the scans into proper sections, run `segment_sheets.py`:
 
-`$ python -m src.segment_sheets -i case_outputs/sheets -o case_outputs/seg -t templates/spring2025.json`
+`$ python -m src.segment_sheets -i case_outputs/sheets -o case_outputs/seg -t instructions/seg_template.json`
 
 In order to scan sheets and enter data into CSV tables, run `scan_sheets.py`:
 
