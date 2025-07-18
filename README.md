@@ -25,11 +25,11 @@ In order to scan sheets and enter data into CSV tables, run `scan_sheets.py`:
 
 To process and clean CSV table data, run `postprocessing.py`:
 
-`$ python -m src.postprocessing -i case_outputs/tables -o case_outputs/tables_clean`
+`$ python -m src.postprocessing -i case_outputs/tables -o case_outputs/tables_clean -fields instructions/field_labels.json`
 
 Finally, to align and package data to export to XLSX, run `package_data.py`:
 
-`$ python -m src.package_data -i case_outputs/tables_clean -o case_outputs/final_data.xlsx`
+`$ python -m src.package_data -i case_outputs/tables_clean -o case_outputs/final_data.xlsx -fields instructions/field_labels.json`
 
 ## Developer Instructions
 
