@@ -52,6 +52,11 @@ def parse_args():
         default=150,
         help="Loading and processing DPI of PDF for selection",
     )
+    parser.add_argument(
+        "--include_multi",
+        action=argparse.BooleanOptionalAction,
+        help="If a case includes multiple summary sheets--- False means only first is kept, True means all are kept; True will overriding results (and is not usable) as of currently",
+    )
     return parser.parse_args()
 
 
@@ -135,6 +140,7 @@ def select(
     debug_dir: str,
     xl_pth: str,
     dpi: int,
+    include_multi=False,
 ):
     # ----- configuration -------------------------------------------------
     MIN_LENGTH = 4
@@ -197,6 +203,8 @@ def select(
                     kept_list.append(page.number + 1)
 
                     print(f"[EVENT] {filename} page {page.number} has word {matched}")
+                    if not include_multi:
+                        break
 
                 # Save crop if debug OR not kept
                 if debug_dir:
@@ -289,9 +297,10 @@ if __name__ == "__main__":
     debug_dir = args.debug
     dpi = args.dpi
     xl_pth = args.spreadsheet
+    include_multi = args.include_multi
 
     clear_pdfdir(output_dir)
     clear_pdfdir(debug_dir)
 
-    select(source_dir, output_dir, debug_dir, xl_pth, dpi)
+    select(source_dir, output_dir, debug_dir, xl_pth, dpi, include_multi)
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
