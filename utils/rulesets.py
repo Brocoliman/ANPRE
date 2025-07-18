@@ -160,7 +160,7 @@ class AddSpaces(RowWiseRule):
         return row
 
 
-class RemoveParentheses(RowWiseRule):
+class ManageWrappingParentheses(RowWiseRule):
     """
     Remove parentheses that wrap around entire test name
     Meant for blue column only
@@ -184,7 +184,7 @@ class RemoveParentheses(RowWiseRule):
         return row
 
 
-class RemoveSelectSymbols(Substitutions):
+class RemoveSelectSymbols(RowWiseRule):
     """
     Remove certain symbols
 
