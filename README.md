@@ -13,19 +13,23 @@ User should create the default output directories utilized in each processing st
 
 First, to select clinical summary sheet scans from full case files, run `select_sheets.py`:
 
-`$ python src/select_sheets.py -i data/full -o case_outputs/sheets -xl case_outputs/patient_data.csv`
+`$ python -m src.select_sheets -i data/full -o case_outputs/sheets -xl case_outputs/patient_data.csv`
 
 Next, to rectify and segment the scans into proper sections, run `segment_sheets.py`:
 
-`$ python src/segment_sheets.py -i case_outputs/sheets -o case_outputs/seg -t templates/spring2025.json`
+`$ python -m src.segment_sheets -i case_outputs/sheets -o case_outputs/seg -t templates/spring2025.json`
 
 In order to scan sheets and enter data into CSV tables, run `scan_sheets.py`:
 
-`$ python src/scan_sheets.py -i case_outputs/seg -o case_outputs/tables`
+`$ python -m src.scan_sheets -i case_outputs/seg -o case_outputs/tables`
 
 To process and clean CSV table data, run `postprocessing.py`:
 
-`$ python src/postprocessing.py -i case_outputs/tables -o case_outputs/tables_clean`
+`$ python -m src.postprocessing -i case_outputs/tables -o case_outputs/tables_clean`
+
+Finally, to align and package data to export to XLSX, run `package_data.py`:
+
+`$ python -m src.package_data -i case_outputs/tables_clean -o case_outputs/final_data.xlsx`
 
 ## Developer Instructions
 
