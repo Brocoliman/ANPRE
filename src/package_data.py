@@ -4,6 +4,7 @@ from pathlib import Path
 import pandas as pd
 import json
 from openpyxl.utils import get_column_letter
+from openpyxl.styles import PatternFill
 
 from utils.flatten_labels import flatten_labels
 
@@ -227,6 +228,60 @@ def package(source_dir: str, db_pth: str, debug_pth: str, fl_pth: str, load_gt: 
         for idx in range(1, ws.max_column + 1):
             letter = get_column_letter(idx)
             ws.column_dimensions[letter].width = 12
+
+        red_fill = PatternFill(
+            start_color="FFC7CE", end_color="FFC7CE", fill_type="solid"
+        )
+        yellow_fill = PatternFill(
+            start_color="FFEB9C", end_color="FFEB9C", fill_type="solid"
+        )
+        white_fill = PatternFill(
+            start_color="FFFFFF", end_color="FFFFFF", fill_type="solid"
+        )
+
+        HEADER_ROWS = 3
+        INDEX_COLS = len(df.index.names)
+
+        for patient_csv, patient_id, patient_map in zip(
+            patient_csvs, patient_ids, patient_maps
+        ):
+            for fl_idx, patient_row_idx in patient_map:
+                if patient_row_idx is None:
+                    continue
+
+                # which Excel column is this field_label?
+                col_tuple = multi_cols[fl_idx]
+                excel_col = df.columns.get_loc(col_tuple) + INDEX_COLS + 1
+
+                # for each of the three metrics:
+                for metric in ("raw_score", "test_info", "comments"):
+                    pred_label = metric + "_pred"
+                    conf_label = metric + "_conf"
+
+                    # find the Excel row
+                    excel_row = (
+                        df.index.get_loc((int(patient_id), pred_label))
+                        + HEADER_ROWS
+                        + 2
+                    )
+
+                    # pull the confidence straight from the CSV
+                    conf_val = patient_csv.iloc[patient_row_idx][conf_label]
+                    conf_val = float(conf_val) if conf_val != "" else 1.0
+
+                    # choose fill
+                    if conf_val < 0.7:
+                        fill = red_fill
+                    elif conf_val < 0.9:
+                        fill = yellow_fill
+                    else:
+                        fill = white_fill
+
+                    ws.cell(row=excel_row, column=excel_col).fill = fill
+
+        # finally save
+        wb = writer.book
+        wb.save(db_pth)
 
 
 ##############################
