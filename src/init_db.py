@@ -68,7 +68,7 @@ def init_db(pi_pth: str, fl_pth: str, db_pth: str, gt: bool):
     multi_cols = pd.MultiIndex.from_tuples(fl, names=["Category", "Test", "Subtest"])
 
     n_patients = len(patient_ids)
-    data = np.empty((n_patients * 6, len(multi_cols)), dtype=object)
+    data = np.empty((n_patients * 3 * (2 if gt else 1), len(multi_cols)), dtype=object)
 
     # ---------------------- wrap final excel  -------------
 
