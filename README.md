@@ -9,7 +9,7 @@ Below are instructions for installing and using the package as a user and develo
 
 User should create the default output directories utilized in each processing stage.
 
-`$ mkdir case_outputs case_outputs case_outputs/sheets case_outputs/seg case_outputs/tables case_outputs/tables_clean`
+`$ mkdir case_outputs case_outputs case_outputs/sheets case_outputs/seg case_outputs/tables case_outputs/tables_clean case_outputs/gt`
 
 First, to select clinical summary sheet scans from full case files, run `select_sheets.py`:
 
@@ -17,7 +17,7 @@ First, to select clinical summary sheet scans from full case files, run `select_
 
 We need to then initialize the final database excel with the correct field labels and patient ids, run `init_db.py`:
 
-`$ python -m src.init_db -pi case_outputs/patient_info.csv -fields instructions/field_labels.json`
+`$ python -m src.init_db -pi case_outputs/patient_info.csv -f instructions/field_labels.json --gt`
 
 Next, to rectify and segment the scans into proper sections, run `segment_sheets.py`:
 
@@ -25,15 +25,15 @@ Next, to rectify and segment the scans into proper sections, run `segment_sheets
 
 In order to scan sheets and enter data into CSV tables, run `scan_sheets.py`:
 
-`$ python -m src.scan_sheets -i case_outputs/seg -o case_outputs/tables`
+`$ python -m src.scan_sheets -i case_outputs/seg -o case_outputs/tables -gt case_outputs/gt --exp_gt`
 
 To process and clean CSV table data, run `postprocessing.py`:
 
-`$ python -m src.postprocessing -i case_outputs/tables -o case_outputs/tables_clean -fields instructions/field_labels.json`
+`$ python -m src.postprocessing -i case_outputs/tables -o case_outputs/tables_clean -f instructions/field_labels.json`
 
 Finally, to align and package data to export to XLSX, run `package_data.py`:
 
-`$ python -m src.package_data -i case_outputs/tables_clean -db case_outputs/final_data.xlsx -fields instructions/field_labels.json`
+`$ python -m src.package_data -i case_outputs/tables_clean -db case_outputs/final_data.xlsx -f instructions/field_labels.json`
 
 ## Developer Instructions
 

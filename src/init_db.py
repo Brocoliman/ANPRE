@@ -33,6 +33,11 @@ def parse_args():
         default="case_outputs/final_data.xlsx",
         help="Path to database excel sheet",
     )
+    parser.add_argument(
+        "--gt",
+        action=argparse.BooleanOptionalAction,
+        help="Whether to include groundtruth subrows",
+    )
 
     return parser.parse_args()
 
@@ -42,11 +47,7 @@ def parse_args():
 ##############################
 
 
-def init_db(
-    pi_pth: str,
-    fl_pth: str,
-    db_pth: str,
-):
+def init_db(pi_pth: str, fl_pth: str, db_pth: str, gt: bool):
     """
     Creates final excel with field labels and all patient ids (no other identifiable patient info)
     """
@@ -72,10 +73,8 @@ def init_db(
     # ---------------------- wrap final excel  -------------
 
     # add row MultiIndex
-    row_tuples = [
-        (pid, label)
-        for pid in patient_ids
-        for label in (
+    subrows = (
+        (
             "raw_score_pred",
             "raw_score_gt",
             "comments_pred",
@@ -83,7 +82,14 @@ def init_db(
             "test_info_pred",
             "test_info_gt",
         )
-    ]
+        if gt
+        else (
+            "raw_score_pred",
+            "comments_pred",
+            "test_info_pred",
+        )
+    )
+    row_tuples = [(pid, label) for pid in patient_ids for label in subrows]
 
     row_index = pd.MultiIndex.from_tuples(row_tuples, names=["Patient", "Field"])
 
@@ -110,7 +116,8 @@ if __name__ == "__main__":
     db_pth = args.db_path
     pi_pth = args.patient_info
     fl_pth = args.fields
+    gt = args.gt
 
-    init_db(pi_pth, fl_pth, db_pth)
+    init_db(pi_pth, fl_pth, db_pth, gt)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

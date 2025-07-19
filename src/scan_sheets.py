@@ -7,7 +7,7 @@ from utils.table_ocr import ocr, get_table, initialize_pipeline
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Patient Sheet Segments, Patient Info \u2192 Raw Patient Tables"
+        description="Patient Sheet Segments, Patient Info \u2192 Raw Patient Tables, (Groundtruth)"
     )
     parser.add_argument(
         "-input",
@@ -23,6 +23,12 @@ def parse_args():
         type=str,
         default="case_outputs/tables",
         help="Path to folder with list of raw patient csv tables",
+    )
+    parser.add_argument(
+        "-gt",
+        type=str,
+        default="case_outputs/gt",
+        help="Path to folder with groundtruth patient image tokens",
     )
     parser.add_argument(
         "-debug",
@@ -48,6 +54,11 @@ def parse_args():
         "--gpu",
         action=argparse.BooleanOptionalAction,
         help="Whether to process on GPU or CPU",
+    )
+    parser.add_argument(
+        "--exp_gt",
+        action=argparse.BooleanOptionalAction,
+        help="Whether to export groundtruth images",
     )
 
     return parser.parse_args()
@@ -164,10 +175,12 @@ if __name__ == "__main__":
     args = parse_args()
     source_dir = args.input
     output_dir = args.output
+    gt_dir = args.gt
     debug_dir = args.debug
     pi_pth = args.patient_info
     use_parallel = args.parallel
     use_gpu = args.gpu
+    export_gt = args.exp_gt
 
     initialize_pipeline(use_gpu)
 
