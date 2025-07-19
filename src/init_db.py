@@ -13,8 +13,8 @@ def parse_args():
         description="Processing tool to extract, anonymize, and then segment patient case sheets for data processing and recording"
     )
     parser.add_argument(
-        "-spreadsheet",
-        "-xl",
+        "-patient_info",
+        "-pi",
         type=str,
         default="case_outputs/patient_info.csv",
         help="Path to CSV file with patient info",
@@ -43,7 +43,7 @@ def parse_args():
 
 
 def init_db(
-    xl_pth: str,
+    pi_pth: str,
     fl_pth: str,
     output_pth: str,
 ):
@@ -51,13 +51,13 @@ def init_db(
     Creates final excel with field labels and all patient ids (no other identifiable patient info)
     """
 
-    xl_pth = Path(xl_pth)
+    pi_pth = Path(pi_pth)
     fl_pth = Path(fl_pth)
 
     # ---------------------- setup: load patient ids and field labels -------------
 
     # load patient ids
-    patient_ids = pd.read_csv(xl_pth).loc[:, "patient_id"]
+    patient_ids = pd.read_csv(pi_pth).loc[:, "patient_id"]
 
     # get field labels flattened into tuples
     fl = flatten_labels(json.loads(fl_pth.read_text()))
@@ -108,9 +108,9 @@ if __name__ == "__main__":
     start = time.perf_counter()
     args = parse_args()
     output_pth = args.output
-    xl_pth = args.spreadsheet
+    pi_pth = args.patient_info
     fl_pth = args.fields
 
-    init_db(xl_pth, fl_pth, output_pth)
+    init_db(pi_pth, fl_pth, output_pth)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

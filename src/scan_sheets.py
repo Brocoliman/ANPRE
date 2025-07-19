@@ -32,8 +32,8 @@ def parse_args():
         help="Path to folder with debug information for scanning",
     )
     parser.add_argument(
-        "-spreadsheet",
-        "-xl",
+        "-patient_info",
+        "-pi",
         type=str,
         default="case_outputs/patient_info.csv",
         help="Path to CSV file with patient info",
@@ -68,7 +68,7 @@ def scan(
     source_dir: str,
     output_dir: str,
     debug_dir: str,
-    xl_pth: str,
+    pi_pth: str,
     parallel=False,
 ):
     """
@@ -119,12 +119,12 @@ def scan(
 def concat(
     source_dir: str,
     output_dir: str,
-    xl_pth: str,
+    pi_pth: str,
 ):
     # ------------------------ config ----------------------
     prefixes = ["body1_", "body2_"]  # all need to exist for valid file
 
-    patients = pd.read_csv(xl_pth)
+    patients = pd.read_csv(pi_pth)
     found_patients = []
     missing_patients = []
 
@@ -166,7 +166,7 @@ if __name__ == "__main__":
     source_dir = args.input
     output_dir = args.output
     debug_dir = args.debug
-    xl_pth = args.spreadsheet
+    pi_pth = args.patient_info
     use_parallel = args.parallel
     use_gpu = args.gpu
 
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     clear_pdfdir(output_dir)
     clear_pdfdir(debug_dir)
 
-    scan(source_dir, output_dir, debug_dir, xl_pth, use_parallel)
-    concat(output_dir, output_dir, xl_pth)
+    scan(source_dir, output_dir, debug_dir, pi_pth, use_parallel)
+    concat(output_dir, output_dir, pi_pth)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

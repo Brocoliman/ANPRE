@@ -45,8 +45,8 @@ def parse_args():
         help="Path to folder for debugging segmentation method (not used, currently)",
     )
     parser.add_argument(
-        "-spreadsheet",
-        "-xl",
+        "-patient_info",
+        "-pi",
         type=str,
         default="case_outputs/patient_info.csv",
         help="Path to CSV file with patient info",

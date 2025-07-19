@@ -60,8 +60,8 @@ def parse_args():
         help="Path to CSV file with all test names in tree structure",
     )
     parser.add_argument(
-        "-spreadsheet",
-        "-xl",
+        "-patient_info",
+        "-pi",
         type=str,
         default="case_outputs/patient_info.csv",
         help="Path to CSV file with final patient data",
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     debug_dir = args.debug
     rules_pth = args.rules
     fl_pth = args.fields
-    xl_pth = args.spreadsheet
+    pi_pth = args.patient_info
 
     clear_pdfdir(output_dir)
     clear_pdfdir(debug_dir)

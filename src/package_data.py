@@ -3,8 +3,8 @@ import argparse
 import time
 from pathlib import Path
 import pandas as pd
-import numpy as np
 import json
+import numpy as np
 
 from utils.flatten_labels import flatten_labels
 
@@ -36,8 +36,8 @@ def parse_args():
         help="Path to folder with debug information for scanning",
     )
     parser.add_argument(
-        "-spreadsheet",
-        "-xl",
+        "-patient_info",
+        "-pi",
         type=str,
         default="case_outputs/patient_info.csv",
         help="Path to CSV file with patient info",
@@ -103,7 +103,7 @@ def package(
     source_dir: str,
     output_pth: str,
     debug_pth: str,
-    xl_pth: str,
+    pi_pth: str,
     fl_pth: str,
 ):
     """
@@ -327,7 +327,7 @@ if __name__ == "__main__":
     source_dir = args.input
     output_pth = args.output
     debug_pth = args.debug
-    xl_pth = args.spreadsheet
+    pi_pth = args.patient_info
     fl_pth = args.fields
 
     if os.path.exists(output_pth):
@@ -335,6 +335,6 @@ if __name__ == "__main__":
     if os.path.exists(debug_pth):
         os.remove(debug_pth)
 
-    package(source_dir, output_pth, debug_pth, xl_pth, fl_pth)
+    package(source_dir, output_pth, debug_pth, pi_pth, fl_pth)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

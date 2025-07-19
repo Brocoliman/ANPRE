@@ -13,11 +13,11 @@ User should create the default output directories utilized in each processing st
 
 First, to select clinical summary sheet scans from full case files, run `select_sheets.py`:
 
-`$ python -m src.select_sheets -i data/full -o case_outputs/sheets -xl case_outputs/patient_info.csv`
+`$ python -m src.select_sheets -i data/full -o case_outputs/sheets -pi case_outputs/patient_info.csv`
 
 We need to then initialize the final database excel with the correct field labels and patient ids, run `init_db.py`:
 
-`$ python -m src.init_db -xl case_outputs/patient_info.csv -fields instructions/field_labels.json`
+`$ python -m src.init_db -pi case_outputs/patient_info.csv -fields instructions/field_labels.json`
 
 Next, to rectify and segment the scans into proper sections, run `segment_sheets.py`:
 

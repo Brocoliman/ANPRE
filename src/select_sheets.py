@@ -40,8 +40,8 @@ def parse_args():
         help="Path to folder for debugging sheet scanning",
     )
     parser.add_argument(
-        "-spreadsheet",
-        "-xl",
+        "-patient_info",
+        "-pi",
         type=str,
         default="case_outputs/patient_info.csv",
         help="Path to CSV file with patient info",
@@ -138,7 +138,7 @@ def select(
     source_dir: str,
     output_dir: str,
     debug_dir: str,
-    xl_pth: str,
+    pi_pth: str,
     dpi: int,
     include_multi=False,
 ):
@@ -160,7 +160,7 @@ def select(
     source_dir = Path(source_dir)
     output_dir = Path(output_dir)
     debug_dir = Path(debug_dir)
-    xl_pth = Path(xl_pth)
+    pi_pth = Path(pi_pth)
 
     filenames = sorted(source_dir.iterdir())
 
@@ -271,7 +271,7 @@ def select(
         "dob_y",
     ]
     prelim_df = DataFrame(prelim_datalist, columns=col_names)
-    prelim_df.to_csv(xl_pth, index=False)
+    prelim_df.to_csv(pi_pth, index=False)
 
     # -------- summary ----------------------------------------------------
     elapsed = time.perf_counter() - t0
@@ -296,11 +296,11 @@ if __name__ == "__main__":
     output_dir = args.output
     debug_dir = args.debug
     dpi = args.dpi
-    xl_pth = args.spreadsheet
+    pi_pth = args.patient_info
     include_multi = args.include_multi
 
     clear_pdfdir(output_dir)
     clear_pdfdir(debug_dir)
 
-    select(source_dir, output_dir, debug_dir, xl_pth, dpi, include_multi)
+    select(source_dir, output_dir, debug_dir, pi_pth, dpi, include_multi)
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
