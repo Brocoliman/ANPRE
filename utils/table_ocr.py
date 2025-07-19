@@ -63,48 +63,72 @@ def get_table(source_path, outputs):
         cells = {
             "head": None,
             "test_info": [],
-            "test_info_conf": [],
             "raw_score": [],
-            "raw_score_conf": [],
             "comments": [],
+            "test_info_conf": [],
+            "raw_score_conf": [],
             "comments_conf": [],
+            "test_info_boxes": [],
+            "raw_score_boxes": [],
+            "comments_boxes": [],
         }
 
         for k in sorted(row, key=lambda k: x_centers[k]):
-            txt, conf, xc = texts[k], scores[k], x_centers[k]
-            conf = round(conf, 2)
+            txt, conf, box, xc = texts[k], round(scores[k], 2), boxes[k], x_centers[k]
 
-            if xc < t1:  # test description column
-                cells["test_info"].append(txt)
-                cells["test_info_conf"].append(conf)
-            elif xc < t2:  # numeric score column
-                cells["raw_score"].append(txt)
-                cells["raw_score_conf"].append(conf)
-            else:  # qualitative comments column
-                cells["comments"].append(txt)
-                cells["comments_conf"].append(conf)
+            if xc < t1:
+                tgt_text, tgt_conf, tgt_boxes = (
+                    "test_info",
+                    "test_info_conf",
+                    "test_info_boxes",
+                )
+            elif xc < t2:
+                tgt_text, tgt_conf, tgt_boxes = (
+                    "raw_score",
+                    "raw_score_conf",
+                    "raw_score_boxes",
+                )
+            else:
+                tgt_text, tgt_conf, tgt_boxes = (
+                    "comments",
+                    "comments_conf",
+                    "comments_boxes",
+                )
 
-        # join the pieces collected in each column
+            cells[tgt_text].append(txt)
+            cells[tgt_conf].append(conf)
+            cells[tgt_boxes].append(box)  # box is [x1,y1,x2,y2]
+
+        # now join strings / aggregate confs
         for col in ("test_info", "raw_score", "comments"):
             cells[col] = "|".join(cells[col]) if cells[col] else ""
         for col in ("test_info_conf", "raw_score_conf", "comments_conf"):
-            if cells[col]:
-                # choose your favorite aggregation: "|".join, np.mean, np.min …
-                cells[col] = np.mean(cells[col])  # float – easier to sort/filter later
+            vals = cells[col]
+            cells[col] = float(np.mean(vals)) if vals else np.nan
+
+        # compute the enclosing box for each column
+        for col in ("test_info", "raw_score", "comments"):
+            box_list = cells[f"{col}_boxes"]
+            if box_list:
+                arr = np.array(box_list)
+                x1, y1 = arr[:, 0].min(), arr[:, 1].min()
+                x2, y2 = arr[:, 2].max(), arr[:, 3].max()
+                # depending on your output format preference:
+                # OPTION A: four separate scalars
+                cells[f"{col}_x1"] = x1
+                cells[f"{col}_y1"] = y1
+                cells[f"{col}_x2"] = x2
+                cells[f"{col}_y2"] = y2
+
+                # OPTION B: packed as one tuple (gets stringified in CSV)
+                # cells[f"{col}_bbox"] = (x1, y1, x2, y2)
             else:
-                cells[col] = np.nan
+                # no tokens → NaN or empty
+                for suffix in ("_x1", "_y1", "_x2", "_y2"):
+                    cells[f"{col}{suffix}"] = np.nan
+                # or cells[f"{col}_bbox"] = ""
 
         table.append(cells)
 
-    return pd.DataFrame(
-        table,
-        columns=[
-            "head",
-            "test_info",
-            "raw_score",
-            "comments",
-            "test_info_conf",
-            "raw_score_conf",
-            "comments_conf",
-        ],
-    )
+    df = pd.DataFrame(table)
+    return df

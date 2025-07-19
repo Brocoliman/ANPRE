@@ -25,7 +25,7 @@ Next, to rectify and segment the scans into proper sections, run `segment_sheets
 
 In order to scan sheets and enter data into CSV tables, run `scan_sheets.py`:
 
-`$ python -m src.scan_sheets -i case_outputs/seg -o case_outputs/tables -gt case_outputs/gt --exp_gt`
+`$ python -m src.scan_sheets -i case_outputs/seg -o case_outputs/tables`
 
 To process and clean CSV table data, run `postprocessing.py`:
 
