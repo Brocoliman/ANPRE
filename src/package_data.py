@@ -1,4 +1,3 @@
-import os
 import argparse
 import time
 from pathlib import Path
@@ -22,8 +21,8 @@ def parse_args():
         help="Path to folder with cleaned patient CSV data ready for packaging into database",
     )
     parser.add_argument(
-        "-output",
-        "-o",
+        "-db_pth",
+        "-db",
         type=str,
         default="case_outputs/final_data.xlsx",
         help="Path to database excel sheet",
@@ -101,7 +100,7 @@ def showdebug(rows, debug_pth, aligns=None, spacing=1, header=""):
 
 def package(
     source_dir: str,
-    output_pth: str,
+    db_pth: str,
     debug_pth: str,
     pi_pth: str,
     fl_pth: str,
@@ -278,7 +277,7 @@ def package(
 
     # ----------------------------------  EXPORT  ----------------------------------
 
-    with pd.ExcelWriter(output_pth, engine="xlsxwriter") as writer:
+    with pd.ExcelWriter(db_pth, engine="xlsxwriter") as writer:
         df.to_excel(writer, sheet_name="Results")  # keep the index; it's meaningful
 
         ws = writer.sheets["Results"]
@@ -325,16 +324,11 @@ if __name__ == "__main__":
     start = time.perf_counter()
     args = parse_args()
     source_dir = args.input
-    output_pth = args.output
+    db_pth = args.db_pth
     debug_pth = args.debug
     pi_pth = args.patient_info
     fl_pth = args.fields
 
-    if os.path.exists(output_pth):
-        os.remove(output_pth)
-    if os.path.exists(debug_pth):
-        os.remove(debug_pth)
-
-    package(source_dir, output_pth, debug_pth, pi_pth, fl_pth)
+    package(source_dir, db_pth, debug_pth, pi_pth, fl_pth)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

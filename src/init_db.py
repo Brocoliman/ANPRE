@@ -27,8 +27,8 @@ def parse_args():
         help="Path to CSV file with all test names in tree structure",
     )
     parser.add_argument(
-        "-output",
-        "-o",
+        "-db_path",
+        "-db",
         type=str,
         default="case_outputs/final_data.xlsx",
         help="Path to database excel sheet",
@@ -45,7 +45,7 @@ def parse_args():
 def init_db(
     pi_pth: str,
     fl_pth: str,
-    output_pth: str,
+    db_pth: str,
 ):
     """
     Creates final excel with field labels and all patient ids (no other identifiable patient info)
@@ -91,7 +91,7 @@ def init_db(
 
     # ----------------------------------  EXPORT  ----------------------------------
 
-    with pd.ExcelWriter(output_pth, engine="xlsxwriter") as writer:
+    with pd.ExcelWriter(db_pth, engine="xlsxwriter") as writer:
         df.to_excel(writer, sheet_name="Results")  # keep the index; it's meaningful
 
         ws = writer.sheets["Results"]
@@ -107,10 +107,10 @@ def init_db(
 if __name__ == "__main__":
     start = time.perf_counter()
     args = parse_args()
-    output_pth = args.output
+    db_pth = args.dataset_path
     pi_pth = args.patient_info
     fl_pth = args.fields
 
-    init_db(pi_pth, fl_pth, output_pth)
+    init_db(pi_pth, fl_pth, db_pth)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
