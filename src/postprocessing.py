@@ -21,7 +21,7 @@ from utils.flatten_labels import flatten_labels
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Data collection tool for patient neuropsychological assessment scores"
+        description="Raw Patient Tables, Ruleset, Field Labels \u2192 Cleaned Patient Tables"
     )
     parser.add_argument(
         "-input",
@@ -29,7 +29,7 @@ def parse_args():
         "-i",
         type=str,
         default="case_outputs/tables",
-        help="Path to folder with list of CSV tables for patient information",
+        help="Path to folder with list of raw patient csv tables",
     )
     parser.add_argument(
         "-output",

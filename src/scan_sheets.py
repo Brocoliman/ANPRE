@@ -7,7 +7,7 @@ from utils.table_ocr import ocr, get_table, initialize_pipeline
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Data collection tool for patient neuropsychological assessment scores"
+        description="Patient Sheet Segments, Patient Info \u2192 Raw Patient Tables"
     )
     parser.add_argument(
         "-input",
@@ -22,7 +22,7 @@ def parse_args():
         "-o",
         type=str,
         default="case_outputs/tables",
-        help="Path to folder with list of csv tables for patient information",
+        help="Path to folder with list of raw patient csv tables",
     )
     parser.add_argument(
         "-debug",
@@ -36,7 +36,7 @@ def parse_args():
         "-pi",
         type=str,
         default="case_outputs/patient_info.csv",
-        help="Path to CSV file with patient info",
+        help="Path to CSV file with final patient data",
     )
     parser.add_argument(
         "--parallel",
@@ -68,7 +68,6 @@ def scan(
     source_dir: str,
     output_dir: str,
     debug_dir: str,
-    pi_pth: str,
     parallel=False,
 ):
     """
@@ -175,7 +174,7 @@ if __name__ == "__main__":
     clear_pdfdir(output_dir)
     clear_pdfdir(debug_dir)
 
-    scan(source_dir, output_dir, debug_dir, pi_pth, use_parallel)
+    scan(source_dir, output_dir, debug_dir, use_parallel)
     concat(output_dir, output_dir, pi_pth)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

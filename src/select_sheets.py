@@ -15,7 +15,7 @@ CROP_PX = (20, 0, 200, 300)
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Data collection tool for patient neuropsychological assessment scores"
+        description="Patient Case Files \u2192 Patient Sheets, Patient Info"
     )
     parser.add_argument(
         "-input",

@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Data collection tool for patient neuropsychological assessment scores"
+        description="Patient Sheets, Segmentation Template \u2192 Patient Sheet Segments"
     )
     parser.add_argument(
         "-input",
@@ -43,13 +43,6 @@ def parse_args():
         type=str,
         default="debug/seg",
         help="Path to folder for debugging segmentation method (not used, currently)",
-    )
-    parser.add_argument(
-        "-patient_info",
-        "-pi",
-        type=str,
-        default="case_outputs/patient_info.csv",
-        help="Path to CSV file with patient info",
     )
     parser.add_argument(
         "-template",

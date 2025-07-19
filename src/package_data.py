@@ -10,7 +10,7 @@ from utils.flatten_labels import flatten_labels
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Processing tool to extract, anonymize, and then segment patient case sheets for data processing and recording"
+        description="Cleaned Patient Tables, Patient Info, Field Labels, Groundtruth-only Database \u2192 Paired Database"
     )
     parser.add_argument(
         "-input",
