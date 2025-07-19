@@ -56,7 +56,7 @@ def parse_args():
         help="Whether to process on GPU or CPU",
     )
     parser.add_argument(
-        "--exp_gt",
+        "--export_gt",
         action=argparse.BooleanOptionalAction,
         help="Whether to export groundtruth images",
     )
@@ -79,7 +79,10 @@ def scan(
     source_dir: str,
     output_dir: str,
     debug_dir: str,
+    gt_dir: str,
     parallel=False,
+    gpu=False,
+    exp_gt=True,
 ):
     """
     Creates case_outputs/tables/000x.csv of patient records
@@ -180,14 +183,14 @@ if __name__ == "__main__":
     pi_pth = args.patient_info
     use_parallel = args.parallel
     use_gpu = args.gpu
-    export_gt = args.exp_gt
+    exp_gt = args.export_gt
 
     initialize_pipeline(use_gpu)
 
     clear_pdfdir(output_dir)
     clear_pdfdir(debug_dir)
 
-    scan(source_dir, output_dir, debug_dir, use_parallel)
+    scan(source_dir, output_dir, debug_dir, gt_dir, use_parallel, use_gpu, exp_gt)
     concat(output_dir, output_dir, pi_pth)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
