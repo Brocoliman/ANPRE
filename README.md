@@ -33,7 +33,7 @@ To process and clean CSV table data, run `postprocessing.py`:
 
 Finally, to align and package data to export to XLSX, run `package_data.py`:
 
-`$ python -m src.package_data -i case_outputs/tables_clean -db case_outputs/final_data.xlsx -f instructions/field_labels.json`
+`$ python -m src.package_data -i case_outputs/tables_clean -db case_outputs/final_data.xlsx -f instructions/field_labels.json --gt`
 
 ## Developer Instructions
 

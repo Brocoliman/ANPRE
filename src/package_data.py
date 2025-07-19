@@ -10,7 +10,7 @@ from utils.flatten_labels import flatten_labels
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Cleaned Patient Tables, Field Labels, Groundtruth-only Database \u2192 Paired Database"
+        description="Cleaned Patient Tables, Field Labels, Empty Database \u2192 Fill (possibly paired --gt) Database"
     )
     parser.add_argument(
         "-input",
@@ -40,6 +40,11 @@ def parse_args():
         type=str,
         default="instructions/field_labels.json",
         help="Path to CSV file with all test names in tree structure",
+    )
+    parser.add_argument(
+        "--gt",
+        action=argparse.BooleanOptionalAction,
+        help="Whether to load images into groundtruth subrows",
     )
 
     return parser.parse_args()
@@ -91,12 +96,7 @@ def showdebug(rows, debug_pth, aligns=None, spacing=1, header=""):
 ##############################
 
 
-def package(
-    source_dir: str,
-    db_pth: str,
-    debug_pth: str,
-    fl_pth: str,
-):
+def package(source_dir: str, db_pth: str, debug_pth: str, fl_pth: str, load_gt: bool):
     """
     Compiles case_outputs/tables_clean to fl_pth final excel
     """
@@ -240,7 +240,8 @@ if __name__ == "__main__":
     db_pth = args.db_pth
     debug_pth = args.debug
     fl_pth = args.fields
+    load_gt = args.gt
 
-    package(source_dir, db_pth, debug_pth, fl_pth)
+    package(source_dir, db_pth, debug_pth, fl_pth, load_gt)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
