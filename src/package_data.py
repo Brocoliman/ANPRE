@@ -3,14 +3,14 @@ import time
 from pathlib import Path
 import pandas as pd
 import json
-import numpy as np
+from openpyxl.utils import get_column_letter
 
 from utils.flatten_labels import flatten_labels
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Cleaned Patient Tables, Patient Info, Field Labels, Groundtruth-only Database \u2192 Paired Database"
+        description="Cleaned Patient Tables, Field Labels, Groundtruth-only Database \u2192 Paired Database"
     )
     parser.add_argument(
         "-input",
@@ -33,13 +33,6 @@ def parse_args():
         type=str,
         default="debug/final_data.txt",
         help="Path to folder with debug information for scanning",
-    )
-    parser.add_argument(
-        "-patient_info",
-        "-pi",
-        type=str,
-        default="case_outputs/patient_info.csv",
-        help="Path to CSV file with patient info",
     )
     parser.add_argument(
         "-fields",
@@ -102,7 +95,6 @@ def package(
     source_dir: str,
     db_pth: str,
     debug_pth: str,
-    pi_pth: str,
     fl_pth: str,
 ):
     """
@@ -201,119 +193,40 @@ def package(
             header=f"=========================================={patient_fn.stem}\n",
         )
 
-    # ---------------------- setup: create xlsx file -------------
+    # ---------------------- setup: load existing template -------------
+    # Read the pre‐initialized final_data.xlsx (with MultiIndex rows & cols)
+    df = pd.read_excel(db_pth, sheet_name="Results", header=[0, 1, 2], index_col=[0, 1])
+    multi_cols = df.columns
 
-    fieldlabels2 = flatten_labels(json.loads(fl_pth.read_text()))
-    print(*fieldlabels2, sep="\n")
-    multi_cols = pd.MultiIndex.from_tuples(
-        fieldlabels2, names=["Category", "Test", "Subtest"]
-    )
-    # <- replace with real list/iterator
+    # ---------------------- build: fill patients into loaded DataFrame -------------
 
-    n_patients = len(patient_ids)
-    data = np.empty((n_patients * 3, len(multi_cols)), dtype=object)
-
-    thres_low, thres_mid = 0.7, 0.9
-    low_conf_cells = []
-    mid_conf_cells = []
-
-    # ---------------------- build: fill patients -------------
-
-    for p_idx, patient_csv in enumerate(patient_csvs):
-        patient_map = patient_maps[p_idx]
-        base = p_idx * 3  # first row (raw_score) for this patient
+    # Now for each patient, write their 3 rows directly into df
+    for patient_csv, patient_id, patient_map in zip(
+        patient_csvs, patient_ids, patient_maps
+    ):
         for fl_idx, patient_row_idx in patient_map:
             if patient_row_idx is None:
                 continue
-
-            # Get the full row from the source CSV to access conf scores
-            source_row = patient_csv.iloc[patient_row_idx]
-
-            # Helper to check confidence and store cell coordinates
-            def check_confidence(conf_str, df_row_idx, df_col_idx):
-                if not conf_str:
-                    return
-                try:
-                    conf_val = float(conf_str)
-                    # Excel row = DataFrame row + 3 header rows (for column MultiIndex)
-                    # Excel col = DataFrame col + 2 index cols (for row MultiIndex)
-                    excel_r = df_row_idx + 4
-                    excel_c = df_col_idx + 2
-
-                    if conf_val < thres_low:
-                        low_conf_cells.append((excel_r, excel_c))
-                    elif conf_val < thres_mid:
-                        mid_conf_cells.append((excel_r, excel_c))
-                except (ValueError, TypeError):
-                    pass  # Ignore non-numeric confidence values
-
-            # ------------------ RAW SCORE ------------------
-            df_row_idx_raw = base
-            data[df_row_idx_raw, fl_idx] = source_row["raw_score"]
-            check_confidence(source_row.get("raw_score_conf"), df_row_idx_raw, fl_idx)
-
-            # ------------------ COMMENTS -------------------
-            df_row_idx_comm = base + 1
-            data[df_row_idx_comm, fl_idx] = source_row["comments"]
-            check_confidence(source_row.get("comments_conf"), df_row_idx_comm, fl_idx)
-
-            # ------------------ TEST-INFO ------------------
-            df_row_idx_info = base + 2
-            data[df_row_idx_info, fl_idx] = source_row["test_info"]
-            check_confidence(source_row.get("test_info_conf"), df_row_idx_info, fl_idx)
-
-    # ---------------------- wrap final excel  -------------
-
-    # add row MultiIndex
-    row_tuples = [
-        (pid, label)
-        for pid in patient_ids
-        for label in ("raw_score", "comments", "test_info")
-    ]
-
-    row_index = pd.MultiIndex.from_tuples(row_tuples, names=["Patient", "Field"])
-
-    df = pd.DataFrame(data, index=row_index, columns=multi_cols)
+            row = patient_csv.iloc[patient_row_idx]
+            col = multi_cols[fl_idx]
+            # Write raw_score, comments, test_info
+            df.at[(int(patient_id), "raw_score_pred"), col] = row["raw_score"]
+            df.at[(int(patient_id), "comments_pred"), col] = row["comments"]
+            df.at[(int(patient_id), "test_info_pred"), col] = row["test_info"]
 
     # ----------------------------------  EXPORT  ----------------------------------
-
-    with pd.ExcelWriter(db_pth, engine="xlsxwriter") as writer:
-        df.to_excel(writer, sheet_name="Results")  # keep the index; it's meaningful
-
+    # Overwrite the "Results" sheet in the same workbook
+    # (xlsxwriter can't append; switch to openpyxl for replace-on-write)
+    with pd.ExcelWriter(
+        db_pth, engine="openpyxl", mode="a", if_sheet_exists="replace"
+    ) as writer:
+        df.to_excel(writer, sheet_name="Results")  # preserve MultiIndex
         ws = writer.sheets["Results"]
-        ws.set_column(
-            first_col=0, last_col=len(df.columns) - 1, width=12
-        )  # uniform width (or auto-fit loop)
 
-        wb = writer.book
-        low_conf_format = wb.add_format(
-            {
-                "bg_color": "#EF5567",
-            }
-        )
-        mid_conf_format = wb.add_format(
-            {
-                "bg_color": "#FFEE6D",
-            }
-        )
-
-        for r, c in low_conf_cells:
-            # Map Excel coordinates back to the numpy array's index
-            df_row = r - 4
-            df_col = c - 2
-            # Get the original value
-            value = data[df_row, df_col]
-            # Write the value AND the format
-            ws.write(r, c, value, low_conf_format)
-
-        for r, c in mid_conf_cells:
-            # Map Excel coordinates back to the numpy array's index
-            df_row = r - 4
-            df_col = c - 2
-            # Get the original value
-            value = data[df_row, df_col]
-            # Write the value AND the format
-            ws.write(r, c, value, mid_conf_format)
+        # set every column width to 12
+        for idx in range(1, ws.max_column + 1):
+            letter = get_column_letter(idx)
+            ws.column_dimensions[letter].width = 12
 
 
 ##############################
@@ -326,9 +239,8 @@ if __name__ == "__main__":
     source_dir = args.input
     db_pth = args.db_pth
     debug_pth = args.debug
-    pi_pth = args.patient_info
     fl_pth = args.fields
 
-    package(source_dir, db_pth, debug_pth, pi_pth, fl_pth)
+    package(source_dir, db_pth, debug_pth, fl_pth)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

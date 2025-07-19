@@ -107,7 +107,7 @@ def init_db(
 if __name__ == "__main__":
     start = time.perf_counter()
     args = parse_args()
-    db_pth = args.dataset_path
+    db_pth = args.db_path
     pi_pth = args.patient_info
     fl_pth = args.fields
 
