@@ -25,12 +25,6 @@ def parse_args():
         help="Path to folder with list of raw patient csv tables",
     )
     parser.add_argument(
-        "-gt",
-        type=str,
-        default="case_outputs/gt",
-        help="Path to folder with groundtruth patient image tokens",
-    )
-    parser.add_argument(
         "-debug",
         "-d",
         type=str,
@@ -48,11 +42,6 @@ def parse_args():
         "--gpu",
         action=argparse.BooleanOptionalAction,
         help="Whether to process on GPU or CPU",
-    )
-    parser.add_argument(
-        "--export_gt",
-        action=argparse.BooleanOptionalAction,
-        help="Whether to export groundtruth images",
     )
 
     return parser.parse_args()
@@ -73,15 +62,13 @@ def scan(
     source_dir: str,
     output_dir: str,
     debug_dir: str,
-    gt_dir: str,
     gpu=False,
-    exp_gt=True,
 ):
     """
     Creates case_outputs/tables/000x.csv of patient records
     """
     for fn in sorted(os.listdir(source_dir)):
-        file = os.path.join(source_dir, fn)
+        file = os.path.join(source_dir, fn)  # /seg/...
         outputs = ocr(file, debug_dir)
         tables = {file: get_table(file, outputs)}
 
@@ -148,18 +135,16 @@ if __name__ == "__main__":
     args = parse_args()
     source_dir = args.input
     output_dir = args.output
-    gt_dir = args.gt
     debug_dir = args.debug
     pi_pth = args.patient_info
     use_gpu = args.gpu
-    exp_gt = args.export_gt
 
     initialize_pipeline(use_gpu)
 
     clear_pdfdir(output_dir)
     clear_pdfdir(debug_dir)
 
-    scan(source_dir, output_dir, debug_dir, gt_dir, use_gpu, exp_gt)
+    scan(source_dir, output_dir, debug_dir, use_gpu)
     concat(output_dir, output_dir, pi_pth)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

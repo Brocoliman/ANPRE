@@ -40,7 +40,7 @@ def get_table(source_path, outputs):
     res = outputs[0]
     j = res.json["res"]
     texts = j["rec_texts"]
-    scores = j["rec_scores"]  # <── NEW
+    scores = j["rec_scores"]
     boxes = np.array(j["rec_boxes"])
     x_centers = (boxes[:, 0] + boxes[:, 2]) / 2
     y_centers = (boxes[:, 1] + boxes[:, 3]) / 2
