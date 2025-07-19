@@ -2,12 +2,14 @@ import os
 import argparse
 import time
 import pandas as pd
+import json
+from pathlib import Path
 from utils.table_ocr import ocr, get_table, initialize_pipeline
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Patient Sheet Segments, Patient Info \u2192 Raw Patient Tables, (Groundtruth)"
+        description="Patient Sheet Segments, Patient Info, Segmentation Template \u2192 Raw Patient Tables, (Groundtruth)"
     )
     parser.add_argument(
         "-input",
@@ -30,6 +32,13 @@ def parse_args():
         type=str,
         default="debug/tables",
         help="Path to folder with debug information for scanning",
+    )
+    parser.add_argument(
+        "-template",
+        "-t",
+        type=str,
+        default="instructions/seg_template.json",
+        help="Path to sheet template file",
     )
     parser.add_argument(
         "-patient_info",
@@ -62,20 +71,20 @@ def scan(
     source_dir: str,
     output_dir: str,
     debug_dir: str,
+    prefixes: list[str],
     gpu=False,
 ):
     """
     Creates case_outputs/tables/000x.csv of patient records
     """
-    for fn in sorted(os.listdir(source_dir)):
-        file = os.path.join(source_dir, fn)  # /seg/...
-        outputs = ocr(file, debug_dir)
-        tables = {file: get_table(file, outputs)}
+    source_dir = Path(source_dir)
+    output_dir = Path(output_dir)
+    for fn in sorted(source_dir.iterdir()):
+        outputs = ocr(fn, debug_dir)
+        tables = {fn: get_table(fn, outputs, prefixes)}
 
         for path, table in tables.items():
-            output_file = os.path.join(
-                output_dir, os.path.splitext(os.path.basename(path))[0] + ".csv"
-            )
+            output_file = output_dir / (path.stem + ".csv")
             table.to_csv(output_file, index=False)
 
         print(f"[EVENT] Tables saved to {output_dir}")
@@ -90,9 +99,9 @@ def concat(
     source_dir: str,
     output_dir: str,
     pi_pth: str,
+    prefixes: list[str],
 ):
     # ------------------------ config ----------------------
-    prefixes = ["body1_", "body2_"]  # all need to exist for valid file
 
     patients = pd.read_csv(pi_pth)
     found_patients = []
@@ -137,6 +146,7 @@ if __name__ == "__main__":
     output_dir = args.output
     debug_dir = args.debug
     pi_pth = args.patient_info
+    template_pth = args.template
     use_gpu = args.gpu
 
     initialize_pipeline(use_gpu)
@@ -144,7 +154,10 @@ if __name__ == "__main__":
     clear_pdfdir(output_dir)
     clear_pdfdir(debug_dir)
 
-    scan(source_dir, output_dir, debug_dir, use_gpu)
-    concat(output_dir, output_dir, pi_pth)
+    with open(template_pth) as f:
+        prefixes = [segname + "_" for segname in json.load(f)["sections"]]
+
+    scan(source_dir, output_dir, debug_dir, prefixes, use_gpu)
+    concat(output_dir, output_dir, pi_pth, prefixes)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

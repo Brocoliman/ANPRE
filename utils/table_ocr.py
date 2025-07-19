@@ -24,6 +24,7 @@ def ocr(source_paths, debug_path):
 
     results = []
     print(f"[EVENT] Scanning {source_paths}...")
+    source_paths = str(source_paths)
     results = pipeline.predict(source_paths)
     for res in results:
         res.save_to_img(debug_path)
@@ -31,11 +32,18 @@ def ocr(source_paths, debug_path):
     return results
 
 
-def get_table(source_path, outputs):
+def get_table(source_path, outputs, prefixes):
     # ── unchanged pre-processing ───────────────────────────────────────────────
     img = Image.open(source_path)
     page_w, _ = img.size
     t1, t2 = 0.675 * page_w, 0.746 * page_w
+
+    segname = None
+    for prefix in prefixes:
+        if source_path.stem.startswith(prefix):
+            segname = prefix
+            break
+    assert segname is not None
 
     res = outputs[0]
     j = res.json["res"]
@@ -61,7 +69,7 @@ def get_table(source_path, outputs):
     table = []
     for row in rows:
         cells = {
-            "head": None,
+            "head": segname,
             "test_info": [],
             "raw_score": [],
             "comments": [],
