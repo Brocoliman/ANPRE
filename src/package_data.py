@@ -341,13 +341,11 @@ if __name__ == "__main__":
     if not load_gt:
         load_gt_range = [0, -1]
     else:
-        load_gt_range = [0, 10]
+        load_gt_range = [0, 9]
 
     with open(template_pth) as f:
         prefixes = json.load(f)["sections"].keys()
 
-    package(
-        source_dir, db_pth, seg_pth, debug_pth, fl_pth, prefixes, load_gt, load_gt_range
-    )
+    package(source_dir, db_pth, seg_pth, debug_pth, fl_pth, prefixes, load_gt_range)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")
