@@ -109,6 +109,41 @@ def showdebug(rows, debug_pth, aligns=None, spacing=1, header=""):
             debug.write(fmt.format(*row) + "\n")
 
 
+# ═════════════════════  helper: resize image to fit cell  ════════════════
+
+
+def resize_image_to_cell(image, cell_width_pixels, cell_height_pixels):
+    """
+    Resize a PIL Image to fit within cell dimensions while preserving aspect ratio.
+
+    Args:
+        image: PIL.Image object
+        cell_width_pixels: Target cell width in pixels
+        cell_height_pixels: Target cell height in pixels
+
+    Returns:
+        PIL.Image object resized to fit within cell
+    """
+    # img_width, img_height = image.size
+    # aspect_ratio = img_width / img_height
+
+    # # Calculate scaling factor to fit within cell dimensions
+    # width_ratio = cell_width_pixels / img_width
+    # height_ratio = cell_height_pixels / img_height
+    # scaling_factor = max(width_ratio, height_ratio)  # Preserve aspect ratio
+
+    # # Compute new dimensions
+    # new_width = int(img_width * scaling_factor)
+    # new_height = int(img_height * scaling_factor)
+
+    # # Resize image
+    # return image.resize((new_width, new_height), PILImage.Resampling.LANCZOS)
+
+    return image.resize(
+        (int(cell_width_pixels), int(cell_height_pixels)), PILImage.Resampling.LANCZOS
+    )
+
+
 ##############################
 # Package patient info
 ##############################
@@ -222,7 +257,7 @@ def package(
             header=f"=========================================={patient_fn.stem}\n",
         )
 
-        # ====================== load existing template ==============
+    # ====================== load existing template ==============
     # Read the pre‐initialized final_data.xlsx (with MultiIndex rows & cols)
     df = pd.read_excel(db_pth, sheet_name="Results", header=[0, 1, 2], index_col=[0, 1])
     multi_cols = df.columns
@@ -335,6 +370,10 @@ def package(
                     float(row[cn_y2]),
                 )
                 cropimg = segs[segname].crop(cropbox)
+                # Resize to fit cell (12 char widths ≈ 96 pixels, 50 points ≈ 66.65 pixels)
+                cropimg = resize_image_to_cell(
+                    cropimg, cell_width_pixels=96, cell_height_pixels=66.65 / 3
+                )
                 temp_image_path = (
                     f"cropped_img_{patient_id}_{metric}.jpg"  # Unique temp file
                 )
@@ -344,8 +383,9 @@ def package(
                 cropimg_excel.anchor = f"{excel_col_letter}{excel_gt_row}"
                 # Note: We’ll add the image after writing the DataFrame
 
-    # Overwrite the "Results" sheet in the same workbook
     temp_files = []  # List to store temporary image file paths
+
+    # Overwrite the "Results" sheet in the same workbook
     with pd.ExcelWriter(
         db_pth, engine="openpyxl", mode="a", if_sheet_exists="replace"
     ) as writer:
@@ -426,13 +466,19 @@ def package(
                         float(row[cn_y2]),
                     )
                     cropimg = segs[segname].crop(cropbox)
+                    # Resize to fit cell (12 char widths ≈ 96 pixels, 50 points ≈ 66.65 pixels)
+                    cropimg = resize_image_to_cell(
+                        cropimg, cell_width_pixels=96, cell_height_pixels=66.65 / 3
+                    )
                     temp_image_path = f"cropped_img_{patient_id}_{metric}.jpg"
                     cropimg.save(temp_image_path)
                     cropimg_excel = OpenpyxlImage(temp_image_path)
                     excel_col_letter = get_column_letter(excel_col)
                     cropimg_excel.anchor = f"{excel_col_letter}{excel_gt_row}"
                     ws.add_image(cropimg_excel)
-                    temp_files.append(temp_image_path)
+                    temp_files.append(temp_image_path)  # Store for later cleanup
+
+    # Clean up all temporary image files after saving
     for temp_file in temp_files:
         try:
             os.remove(temp_file)
