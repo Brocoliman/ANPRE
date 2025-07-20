@@ -155,7 +155,7 @@ if __name__ == "__main__":
     clear_pdfdir(debug_dir)
 
     with open(template_pth) as f:
-        prefixes = [segname + "_" for segname in json.load(f)["sections"]]
+        prefixes = [segname + "_" for segname in json.load(f)["sections"].keys()]
 
     scan(source_dir, output_dir, debug_dir, prefixes, use_gpu)
     concat(output_dir, output_dir, pi_pth, prefixes)
