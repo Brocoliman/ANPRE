@@ -1,3 +1,4 @@
+import os
 import argparse
 import time
 from pathlib import Path
@@ -221,129 +222,203 @@ def package(
             header=f"=========================================={patient_fn.stem}\n",
         )
 
-    # ====================== load existing template ==============
+        # ====================== load existing template ==============
     # Read the pre‐initialized final_data.xlsx (with MultiIndex rows & cols)
     df = pd.read_excel(db_pth, sheet_name="Results", header=[0, 1, 2], index_col=[0, 1])
     multi_cols = df.columns
 
     # ====================== build: fill patients into loaded DataFrame ==============
 
+    # Define confidence fillings
+    red_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+    yellow_fill = PatternFill(
+        start_color="FFEB9C", end_color="FFEB9C", fill_type="solid"
+    )
+    white_fill = PatternFill(
+        start_color="FFFFFF", end_color="FFFFFF", fill_type="solid"
+    )
+
+    HEADER_ROWS = 3
+    INDEX_COLS = len(df.index.names)
+
+    # ---------------------- build ----------------------
+    # iterate over patients
+    for patient_csv, patient_id, patient_map in zip(
+        patient_csvs, patient_ids, patient_maps
+    ):
+        patient_id_5dig = patient_id
+        patient_id_int = int(patient_id)
+        load_this_gt = load_gt_range[0] <= int(patient_id_int) <= load_gt_range[1]
+
+        # load the segmented images for this patient
+        if load_this_gt:
+            segs = dict()
+            for prefix in prefixes:
+                segs.update(
+                    {
+                        prefix: PILImage.open(
+                            seg_pth / (prefix + "_" + patient_id_5dig + ".png")
+                        )
+                    }
+                )
+
+        # iterate over field labels
+        for fl_idx, patient_row_idx in patient_map:
+            if patient_row_idx is None:
+                continue
+
+            # ---------------------- data ----------------------
+            # get the row and column
+            row = patient_csv.iloc[
+                patient_row_idx
+            ]  # the patient row information (object)
+            col = multi_cols[fl_idx]  # exact field label (index)
+
+            # Write raw_score, comments, test_info
+            df.at[(int(patient_id), "raw_score_pred"), col] = row["raw_score"]
+            df.at[(int(patient_id), "comments_pred"), col] = row["comments"]
+            df.at[(int(patient_id), "test_info_pred"), col] = row["test_info"]
+
+            # which Excel column is this field_label?
+            excel_col = df.columns.get_loc(col) + INDEX_COLS + 1
+
+            # for each of the three metrics:
+            for metric in ("raw_score", "test_info", "comments"):
+                # make sure this has a value
+                if not row[metric]:
+                    continue
+
+                pred_label = metric + "_pred"
+                conf_label = metric + "_conf"
+
+                # ---------------------confidence----------------
+                # find the Excel row
+                excel_data_row = (
+                    df.index.get_loc((patient_id_int, pred_label)) + HEADER_ROWS + 2
+                )
+
+                # pull the confidence straight from the CSV
+                conf_val = patient_csv.iloc[patient_row_idx][conf_label]
+                conf_val = float(conf_val) if conf_val != "" else 1.0
+
+                # choose fill
+                if conf_val < 0.7:
+                    fill = red_fill
+                elif conf_val < 0.9:
+                    fill = yellow_fill
+                else:
+                    fill = white_fill
+
+                # Note: We’ll apply the fill after writing the DataFrame
+
+                if not load_this_gt:
+                    continue
+
+                # ---------------------groundtruth----------------
+                excel_gt_row = (
+                    df.index.get_loc((patient_id_int, pred_label)) + HEADER_ROWS + 3
+                )
+
+                cn_x1, cn_y1, cn_x2, cn_y2 = (
+                    metric + "_x1",
+                    metric + "_y1",
+                    metric + "_x2",
+                    metric + "_y2",
+                )  # column names
+                segname = patient_csv.iloc[patient_row_idx]["head"][
+                    :-1
+                ]  # e.g. body1; key for 'segs'
+                cropbox = (
+                    float(row[cn_x1]),
+                    float(row[cn_y1]),
+                    float(row[cn_x2]),
+                    float(row[cn_y2]),
+                )
+                cropimg = segs[segname].crop(cropbox)
+                temp_image_path = (
+                    f"cropped_img_{patient_id}_{metric}.jpg"  # Unique temp file
+                )
+                cropimg.save(temp_image_path)
+                cropimg_excel = OpenpyxlImage(temp_image_path)
+                excel_col_letter = get_column_letter(excel_col)
+                cropimg_excel.anchor = f"{excel_col_letter}{excel_gt_row}"
+                # Note: We’ll add the image after writing the DataFrame
+
     # Overwrite the "Results" sheet in the same workbook
+    temp_files = []  # List to store temporary image file paths
     with pd.ExcelWriter(
         db_pth, engine="openpyxl", mode="a", if_sheet_exists="replace"
     ) as writer:
-
-        # ---------------------- setup ----------------------
-        df.to_excel(writer, sheet_name="Results")  # preserve MultiIndex
+        # Write the updated DataFrame
+        df.to_excel(writer, sheet_name="Results")  # Write after all df.at modifications
         ws = writer.sheets["Results"]
 
-        # set every column width to 12
+        # Set every column width to 12
         for idx in range(1, ws.max_column + 1):
             letter = get_column_letter(idx)
             ws.column_dimensions[letter].width = 12
 
-        # define confidence fillings
-        red_fill = PatternFill(
-            start_color="FFC7CE", end_color="FFC7CE", fill_type="solid"
-        )
-        yellow_fill = PatternFill(
-            start_color="FFEB9C", end_color="FFEB9C", fill_type="solid"
-        )
-        white_fill = PatternFill(
-            start_color="FFFFFF", end_color="FFFFFF", fill_type="solid"
-        )
-
-        HEADER_ROWS = 3
-        INDEX_COLS = len(df.index.names)
-
-        # ---------------------- build ----------------------
-        # iterate over patients
+        # Re-iterate to apply fills and images (since ws is fresh after df.to_excel)
         for patient_csv, patient_id, patient_map in zip(
             patient_csvs, patient_ids, patient_maps
         ):
-            patient_id_5dig = patient_id
             patient_id_int = int(patient_id)
             load_this_gt = load_gt_range[0] <= int(patient_id_int) <= load_gt_range[1]
 
-            # load the segmented images for this patient
             if load_this_gt:
                 segs = dict()
                 for prefix in prefixes:
                     segs.update(
                         {
                             prefix: PILImage.open(
-                                seg_pth / (prefix + "_" + patient_id_5dig + ".png")
+                                seg_pth / (prefix + "_" + patient_id + ".png")
                             )
                         }
                     )
 
-            # iterate over field labels
             for fl_idx, patient_row_idx in patient_map:
                 if patient_row_idx is None:
                     continue
 
-                # ---------------------- data ----------------------
-
-                # get the row and column
-                row = patient_csv.iloc[
-                    patient_row_idx
-                ]  # the patient row information (object)
-                col = multi_cols[fl_idx]  # exact field label (index)
-
-                # Write raw_score, comments, test_info
-                df.at[(int(patient_id), "raw_score_pred"), col] = row["raw_score"]
-                df.at[(int(patient_id), "comments_pred"), col] = row["comments"]
-                df.at[(int(patient_id), "test_info_pred"), col] = row["test_info"]
-
-                # which Excel column is this field_label?
+                row = patient_csv.iloc[patient_row_idx]
+                col = multi_cols[fl_idx]
                 excel_col = df.columns.get_loc(col) + INDEX_COLS + 1
 
-                # for each of the three metrics:
                 for metric in ("raw_score", "test_info", "comments"):
-                    # make sure this has a value
                     if not row[metric]:
                         continue
 
                     pred_label = metric + "_pred"
                     conf_label = metric + "_conf"
 
-                    # ---------------------confidence----------------
-                    # find the Excel row
+                    # Apply confidence fill
                     excel_data_row = (
                         df.index.get_loc((patient_id_int, pred_label)) + HEADER_ROWS + 2
                     )
-
-                    # pull the confidence straight from the CSV
                     conf_val = patient_csv.iloc[patient_row_idx][conf_label]
                     conf_val = float(conf_val) if conf_val != "" else 1.0
-
-                    # choose fill
                     if conf_val < 0.7:
                         fill = red_fill
                     elif conf_val < 0.9:
                         fill = yellow_fill
                     else:
                         fill = white_fill
-
                     ws.cell(row=excel_data_row, column=excel_col).fill = fill
 
                     if not load_this_gt:
                         continue
 
-                    # ---------------------groundtruth----------------
+                    # Apply groundtruth image
                     excel_gt_row = (
                         df.index.get_loc((patient_id_int, pred_label)) + HEADER_ROWS + 3
                     )
-
                     cn_x1, cn_y1, cn_x2, cn_y2 = (
                         metric + "_x1",
                         metric + "_y1",
                         metric + "_x2",
                         metric + "_y2",
-                    )  # column names
-                    segname = patient_csv.iloc[patient_row_idx]["head"][
-                        :-1
-                    ]  # e.g. body1; key for 'segs'
+                    )
+                    segname = patient_csv.iloc[patient_row_idx]["head"][:-1]
                     cropbox = (
                         float(row[cn_x1]),
                         float(row[cn_y1]),
@@ -351,16 +426,18 @@ def package(
                         float(row[cn_y2]),
                     )
                     cropimg = segs[segname].crop(cropbox)
-                    cropimg.save("cropped_img.jpg")
-                    cropimg = OpenpyxlImage("cropped_img.jpg")
-
+                    temp_image_path = f"cropped_img_{patient_id}_{metric}.jpg"
+                    cropimg.save(temp_image_path)
+                    cropimg_excel = OpenpyxlImage(temp_image_path)
                     excel_col_letter = get_column_letter(excel_col)
-                    cropimg.anchor = f"{excel_col_letter}{excel_gt_row}"
-                    ws.add_image(cropimg)
-
-        # finally save
-        wb = writer.book
-        wb.save(db_pth)
+                    cropimg_excel.anchor = f"{excel_col_letter}{excel_gt_row}"
+                    ws.add_image(cropimg_excel)
+                    temp_files.append(temp_image_path)
+    for temp_file in temp_files:
+        try:
+            os.remove(temp_file)
+        except FileNotFoundError:
+            pass  # Ignore if file was already deleted
 
 
 ##############################
