@@ -68,7 +68,7 @@ def init_db(pi_pth: str, fl_pth: str, db_pth: str, gt: bool):
     multi_cols = pd.MultiIndex.from_tuples(fl, names=["Category", "Test", "Subtest"])
 
     n_patients = len(patient_ids)
-    data = np.empty((n_patients * 3 * (2 if gt else 1), len(multi_cols)), dtype=object)
+    data = np.empty((n_patients * 3 * (3 if gt else 1), len(multi_cols)), dtype=object)
 
     # ---------------------- wrap final excel  -------------
 
@@ -77,10 +77,13 @@ def init_db(pi_pth: str, fl_pth: str, db_pth: str, gt: bool):
         (
             "raw_score_pred",
             "raw_score_gt",
+            "raw_score_acc",
             "comments_pred",
             "comments_gt",
+            "comments_acc",
             "test_info_pred",
             "test_info_gt",
+            "test_info_acc",
         )
         if gt
         else (

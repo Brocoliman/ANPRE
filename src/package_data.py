@@ -341,7 +341,7 @@ if __name__ == "__main__":
     if not load_gt:
         load_gt_range = [0, -1]
     else:
-        load_gt_range = [0, 9]
+        load_gt_range = [10, 39]
 
     with open(template_pth) as f:
         prefixes = json.load(f)["sections"].keys()

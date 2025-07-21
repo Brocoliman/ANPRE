@@ -204,6 +204,12 @@ def select(
 
                     print(f"[EVENT] {filename} page {page.number} has word {matched}")
                     if not include_multi:
+                        if debug_dir:
+                            dst = debug_doc.new_page(width=w_pt, height=h_pt)
+                            dst.insert_image(
+                                dst.rect,
+                                stream=cv2.imencode(".png", annotated)[1].tobytes(),
+                            )
                         break
 
                 # Save crop if debug OR not kept
