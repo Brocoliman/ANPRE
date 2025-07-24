@@ -12,7 +12,7 @@ def initialize_pipeline(gpu):
         use_doc_orientation_classify=False,
         use_doc_unwarping=False,
         use_textline_orientation=False,
-        device="gpu" if gpu else "cpu",
+        device="gpu",  # if gpu else "cpu",
     )
 
 
@@ -28,7 +28,6 @@ def ocr(source_paths, debug_path):
     results = pipeline.predict(source_paths)
     for res in results:
         res.save_to_img(debug_path)
-        res.save_to_json(debug_path)
     return results
 
 
@@ -59,8 +58,10 @@ def get_table(source_path, outputs, prefixes):
     rows, cur = [], [idx_sorted[0]]
     for idx in idx_sorted[1:]:
         if abs(y_centers[idx] - y_centers[cur[-1]]) < med_h * 0.5:
+            # add to existing row
             cur.append(idx)
         else:
+            # make new row and reset
             rows.append(cur)
             cur = [idx]
     rows.append(cur)
@@ -109,7 +110,8 @@ def get_table(source_path, outputs, prefixes):
 
         # now join strings / aggregate confs
         for col in ("test_info", "raw_score", "comments"):
-            cells[col] = "|".join(cells[col]) if cells[col] else ""
+            col_no_bar = [token.replace("|", " ") for token in cells[col]]
+            cells[col] = "|".join(col_no_bar) if col_no_bar else ""
         for col in ("test_info_conf", "raw_score_conf", "comments_conf"):
             vals = cells[col]
             cells[col] = float(np.mean(vals)) if vals else np.nan
