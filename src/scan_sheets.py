@@ -2,12 +2,14 @@ import os
 import argparse
 import time
 import pandas as pd
+import json
+from pathlib import Path
 from utils.table_ocr import ocr, get_table, initialize_pipeline
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Data collection tool for patient neuropsychological assessment scores"
+        description="Patient Sheet Segments, Patient Info, Segmentation Template \u2192 Raw Patient Tables, (Groundtruth)"
     )
     parser.add_argument(
         "-input",
@@ -22,7 +24,7 @@ def parse_args():
         "-o",
         type=str,
         default="case_outputs/tables",
-        help="Path to folder with list of csv tables for patient information",
+        help="Path to folder with list of raw patient csv tables",
     )
     parser.add_argument(
         "-debug",
@@ -32,17 +34,18 @@ def parse_args():
         help="Path to folder with debug information for scanning",
     )
     parser.add_argument(
-        "-spreadsheet",
-        "-xl",
+        "-template",
+        "-t",
         type=str,
-        default="case_outputs/patient_data.csv",
-        help="Path to CSV file with final patient data",
+        default="instructions/seg_template.json",
+        help="Path to sheet template file",
     )
     parser.add_argument(
-        "--parallel",
-        "--p",
-        action=argparse.BooleanOptionalAction,
-        help="Whether to parallelize OCR processing (on CPU, it seems not to matter)",
+        "-patient_info",
+        "-pi",
+        type=str,
+        default="case_outputs/patient_info.csv",
+        help="Path to CSV file with final patient data",
     )
     parser.add_argument(
         "--gpu",
@@ -68,47 +71,23 @@ def scan(
     source_dir: str,
     output_dir: str,
     debug_dir: str,
-    xl_pth: str,
-    parallel=False,
+    prefixes: list[str],
+    gpu=False,
 ):
     """
     Creates case_outputs/tables/000x.csv of patient records
     """
-    if parallel:
-        # ---------- batch all files in one go ----------
-        # build list of all image paths
-        files = [
-            os.path.join(source_dir, fn)
-            for fn in sorted(os.listdir(source_dir))
-            if fn.lower().endswith((".png", ".jpg", ".jpeg"))
-        ]
+    source_dir = Path(source_dir)
+    output_dir = Path(output_dir)
+    for fn in sorted(source_dir.iterdir()):
+        outputs = ocr(fn, debug_dir)
+        tables = {fn: get_table(fn, outputs, prefixes)}
 
-        # run OCR on the entire batch
-        outputs_list = ocr(files, debug_dir)
-
-        # one table per file
-        for file_path, page_result in zip(files, outputs_list):
-            # wrap single-page result in a list to match get_table signature
-            table = get_table(file_path, [page_result])
-
-            output_file = os.path.join(
-                output_dir, os.path.splitext(os.path.basename(file_path))[0] + ".csv"
-            )
+        for path, table in tables.items():
+            output_file = output_dir / (path.stem + ".csv")
             table.to_csv(output_file, index=False)
-            print(f"[EVENT] Saved table for {os.path.basename(file_path)}")
-    else:
-        for fn in os.listdir(source_dir):
-            file = os.path.join(source_dir, fn)
-            outputs = ocr(file, debug_dir)
-            tables = {file: get_table(file, outputs)}
 
-            for path, table in tables.items():
-                output_file = os.path.join(
-                    output_dir, os.path.splitext(os.path.basename(path))[0] + ".csv"
-                )
-                table.to_csv(output_file, index=False)
-
-            print(f"[EVENT] Tables saved to {output_dir}")
+        print(f"[EVENT] Tables saved to {output_dir}")
 
 
 ##############################
@@ -119,33 +98,33 @@ def scan(
 def concat(
     source_dir: str,
     output_dir: str,
-    xl_pth: str,
+    pi_pth: str,
+    prefixes: list[str],
 ):
     # ------------------------ config ----------------------
-    prefixes = ["body1_", "body2_"]  # all need to exist for valid file
 
-    patients = pd.read_csv(xl_pth)
+    patients = pd.read_csv(pi_pth)
     found_patients = []
     missing_patients = []
 
     # Iterate through each patient
     for _, row in patients.iterrows():
         # Get filename
-        record_id = int(row["record_id"])
-        csv_stem = f"{record_id:05d}.csv"
+        patient_id = int(row["patient_id"])
+        csv_stem = f"{patient_id:05d}.csv"
 
         # See if all of patient's pages (file) exists (each prefix corresp to a page)
         filenames = [os.path.join(source_dir, prefix + csv_stem) for prefix in prefixes]
 
         if all(map(os.path.exists, filenames)):
-            found_patients.append(record_id)
+            found_patients.append(patient_id)
             # Now concatenate
             patient_csv = pd.concat(
                 [pd.read_csv(os.path.join(file)) for file in filenames]
             )
             patient_csv.to_csv(os.path.join(output_dir, csv_stem), index=False)
         else:
-            missing_patients.append(record_id)
+            missing_patients.append(patient_id)
         for fn in filenames:
             try:
                 os.remove(fn)
@@ -166,8 +145,8 @@ if __name__ == "__main__":
     source_dir = args.input
     output_dir = args.output
     debug_dir = args.debug
-    xl_pth = args.spreadsheet
-    use_parallel = args.parallel
+    pi_pth = args.patient_info
+    template_pth = args.template
     use_gpu = args.gpu
 
     initialize_pipeline(use_gpu)
@@ -175,7 +154,10 @@ if __name__ == "__main__":
     clear_pdfdir(output_dir)
     clear_pdfdir(debug_dir)
 
-    scan(source_dir, output_dir, debug_dir, xl_pth, use_parallel)
-    concat(output_dir, output_dir, xl_pth)
+    with open(template_pth) as f:
+        prefixes = [segname + "_" for segname in json.load(f)["sections"].keys()]
+
+    scan(source_dir, output_dir, debug_dir, prefixes, use_gpu)
+    concat(output_dir, output_dir, pi_pth, prefixes)
 
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

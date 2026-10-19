@@ -13,19 +13,27 @@ User should create the default output directories utilized in each processing st
 
 First, to select clinical summary sheet scans from full case files, run `select_sheets.py`:
 
-`$ python src/select_sheets.py -i data/full -o case_outputs/sheets -xl case_outputs/patient_data.csv`
+`$ python -m src.select_sheets -i data/full -o case_outputs/sheets -pi case_outputs/patient_info.csv`
 
 Next, to rectify and segment the scans into proper sections, run `segment_sheets.py`:
 
-`$ python src/segment_sheets.py -i case_outputs/sheets -o case_outputs/seg -t templates/spring2025.json`
+`$ python -m src.segment_sheets -i case_outputs/sheets -o case_outputs/seg -t instructions/seg_template.json`
 
 In order to scan sheets and enter data into CSV tables, run `scan_sheets.py`:
 
-`$ python src/scan_sheets.py -i case_outputs/seg -o case_outputs/tables`
+`$ python -m src.scan_sheets -i case_outputs/seg -o case_outputs/tables`
 
 To process and clean CSV table data, run `postprocessing.py`:
 
-`$ python src/postprocessing.py -i case_outputs/tables -o case_outputs/tables_clean`
+`$ python -m src.postprocessing -i case_outputs/tables -o case_outputs/tables_clean -f instructions/field_labels.json`
+
+We need to then initialize the final database excel with the correct field labels and patient ids, run `init_db.py`. Add `--gt` if loading groundtruth images.
+
+`$ python -m src.init_db -pi case_outputs/patient_info.csv -f instructions/field_labels.json`
+
+Finally, to align and package data to export to XLSX, run `package_data.py`. Add `--gt` if loading groundtruth images.
+
+`$ python -m src.package_data -i case_outputs/tables_clean -db case_outputs/final_data.xlsx -f instructions/field_labels.json`
 
 ## Developer Instructions
 

@@ -15,7 +15,7 @@ CROP_PX = (20, 0, 200, 300)
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Data collection tool for patient neuropsychological assessment scores"
+        description="Patient Case Files \u2192 Patient Sheets, Patient Info"
     )
     parser.add_argument(
         "-input",
@@ -40,17 +40,22 @@ def parse_args():
         help="Path to folder for debugging sheet scanning",
     )
     parser.add_argument(
-        "-spreadsheet",
-        "-xl",
+        "-patient_info",
+        "-pi",
         type=str,
-        default="case_outputs/patient_data.csv",
-        help="Path to CSV file with final patient data",
+        default="case_outputs/patient_info.csv",
+        help="Path to CSV file with patient info",
     )
     parser.add_argument(
         "-dpi",
         type=int,
         default=150,
         help="Loading and processing DPI of PDF for selection",
+    )
+    parser.add_argument(
+        "--include_multi",
+        action=argparse.BooleanOptionalAction,
+        help="If a case includes multiple summary sheets--- False means only first is kept, True means all are kept; True will overriding results (and is not usable) as of currently",
     )
     return parser.parse_args()
 
@@ -133,8 +138,9 @@ def select(
     source_dir: str,
     output_dir: str,
     debug_dir: str,
-    xl_pth: str,
+    pi_pth: str,
     dpi: int,
+    include_multi=False,
 ):
     # ----- configuration -------------------------------------------------
     MIN_LENGTH = 4
@@ -154,11 +160,11 @@ def select(
     source_dir = Path(source_dir)
     output_dir = Path(output_dir)
     debug_dir = Path(debug_dir)
-    xl_pth = Path(xl_pth)
+    pi_pth = Path(pi_pth)
 
-    filenames = source_dir.iterdir()
+    filenames = sorted(source_dir.iterdir())
 
-    # Contains record_id, new filename, other fields not added yet
+    # Contains patient_id, new filename, other fields not added yet
     prelim_datalist = []
 
     w_pt = (CROP_PX[2] - CROP_PX[0]) * 72 / BASE_DPI
@@ -197,6 +203,14 @@ def select(
                     kept_list.append(page.number + 1)
 
                     print(f"[EVENT] {filename} page {page.number} has word {matched}")
+                    if not include_multi:
+                        if debug_dir:
+                            dst = debug_doc.new_page(width=w_pt, height=h_pt)
+                            dst.insert_image(
+                                dst.rect,
+                                stream=cv2.imencode(".png", annotated)[1].tobytes(),
+                            )
+                        break
 
                 # Save crop if debug OR not kept
                 if debug_dir:
@@ -225,7 +239,7 @@ def select(
 
             prelim_datalist.append(
                 [
-                    idx,  # record_id
+                    idx,  # patient_id
                     new_filename,  # filename
                     None,  # format (will have to be determined)
                     lastname,  # lastname
@@ -249,7 +263,7 @@ def select(
 
     # Save to excel
     col_names = [
-        "record_id",  # not mrn
+        "patient_id",  # not mrn
         "filename",
         "format",
         "lastname",
@@ -263,7 +277,7 @@ def select(
         "dob_y",
     ]
     prelim_df = DataFrame(prelim_datalist, columns=col_names)
-    prelim_df.to_csv(xl_pth, index=False)
+    prelim_df.to_csv(pi_pth, index=False)
 
     # -------- summary ----------------------------------------------------
     elapsed = time.perf_counter() - t0
@@ -288,10 +302,11 @@ if __name__ == "__main__":
     output_dir = args.output
     debug_dir = args.debug
     dpi = args.dpi
-    xl_pth = args.spreadsheet
+    pi_pth = args.patient_info
+    include_multi = args.include_multi
 
     clear_pdfdir(output_dir)
     clear_pdfdir(debug_dir)
 
-    select(source_dir, output_dir, debug_dir, xl_pth, dpi)
+    select(source_dir, output_dir, debug_dir, pi_pth, dpi, include_multi)
     print(f"[REPORT] Total time taken: {time.perf_counter()-start}")

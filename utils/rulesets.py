@@ -61,14 +61,39 @@ class Substitutions(RowWiseRule):
         self.subs = subs
 
     def _row_apply(self, row: pd.Series) -> pd.Series:
+        # Nothing to do ➜ return the row unchanged
+        if not self.subs:
+            return row
+
         text = str(row.iloc[self.col])
 
-        keys = sorted(self.subs, key=len, reverse=True)
-        pattern = re.compile("|".join(re.escape(k) for k in keys))
-        text = pattern.sub(lambda m: self.subs[m.group(0)], text)
+        # Build pattern only once per rule (optional micro-optimisation)
+        if not hasattr(self, "_pattern"):
+            keys = sorted(self.subs, key=len, reverse=True)
+            self._pattern = re.compile("|".join(re.escape(k) for k in keys))
 
-        row.iloc[self.col] = text
+        # If somehow the pattern is empty (all keys were ''), bail out
+        if self._pattern.pattern == "":
+            return row
+
+        row.iloc[self.col] = self._pattern.sub(
+            lambda m: self.subs.get(m.group(0), m.group(0)),  # safe lookup
+            text,
+        )
         return row
+
+
+class Remove(Substitutions):
+    """
+    Direct removals
+
+    Args:
+        rm (list[str]): list of characters to remove, is case sensitive
+    """
+
+    def __init__(self, domain: ..., col: int, rm: list[str]):
+        subs = {item: "" for item in rm}
+        super().__init__(domain, col, subs)
 
 
 class SlashScores(RowWiseRule):
@@ -138,7 +163,7 @@ class SlashScores(RowWiseRule):
 
 class AddSpaces(RowWiseRule):
     """
-    Add spaces between parentheses and outer words
+    Add spaces between parentheses and outer words, and also around hash signs
     """
 
     def __init__(self, domain: ..., col: int):
@@ -160,7 +185,7 @@ class AddSpaces(RowWiseRule):
         return row
 
 
-class RemoveParentheses(RowWiseRule):
+class ManageWrappingParentheses(RowWiseRule):
     """
     Remove parentheses that wrap around entire test name
     Meant for blue column only
@@ -184,39 +209,83 @@ class RemoveParentheses(RowWiseRule):
         return row
 
 
-class RemoveSelectSymbols(RowWiseRule):
+class RemoveRegex(RowWiseRule):
     """
-    Remove certain symbols
+    Remove certain regex
 
     Args:
-        rm (list[str]): list of characters or substrings that will be removed, is case sensitive
+        regex (str): regex of removal condition
     """
 
-    def __init__(self, domain: ..., col: int, rm: list[str]):
+    def __init__(self, domain: ..., col: int, regex: str):
         super().__init__(domain, col)
-        self.rm = {ord(c): None for c in rm}
+        self.regex = regex
 
     def _row_apply(self, row: pd.Series) -> pd.Series:
         text = str(row.iloc[self.col])
-        text = text.translate(self.rm)
+        text = re.sub(self.regex, "", text)
         row.iloc[self.col] = text
         return row
 
 
-class RemoveLogographics(RowWiseRule):
+class RemoveLogographicUnicodes(RemoveRegex):
     """
     Remove chinese lettering
     """
 
     def __init__(self, domain: ..., col: int):
-        super().__init__(domain, col)
+        super().__init__(domain, col, regex=r"[\u4E00-\u9FFF]+")
 
-    def _row_apply(self, row: pd.Series) -> pd.Series:
-        text = str(row.iloc[self.col])
-        logographic = r"[\u4E00-\u9FFF]+"
-        text = re.sub(logographic, "", text)
-        row.iloc[self.col] = text
-        return row
+
+class CleanAlphaNumericalUnicodes(Substitutions):
+    """
+    Standardize characters
+    For example,
+    Turn ⑴ -> 1, ⑨ -> 9
+    Applied to all columns
+    """
+
+    def __init__(self, domain: ..., col: int):
+        subs = dict()
+        for cp in range(0xFF10, 0xFF1A):
+            subs[chr(cp)] = chr(cp - 0xFF10 + 0x30)
+
+        # Circled ①–⑳  (U+2460 .. U+2473)
+        for i, cp in enumerate(range(0x2460, 0x2474), 1):
+            subs[chr(cp)] = str(i)
+
+        # Circled ⓪
+        subs["\u24ea"] = "0"
+
+        # Negative-circled 1–10  (U+24EB .. U+24F4)
+        for i, cp in enumerate(range(0x24EB, 0x24F5), 1):
+            subs[chr(cp)] = str(i)
+
+        # Double-circled 1–10  (U+24F5 .. U+24FE)
+        for i, cp in enumerate(range(0x24F5, 0x24FF), 1):
+            subs[chr(cp)] = str(i)
+
+        # 2. Letters -----------------------------------------------------
+        # Full-width capitals Ａ–Ｚ
+        for cp in range(0xFF21, 0xFF3B):
+            subs[chr(cp)] = chr(cp - 0xFF21 + 0x41)
+
+        # Full-width smalls ａ–ｚ
+        for cp in range(0xFF41, 0xFF5B):
+            subs[chr(cp)] = chr(cp - 0xFF41 + 0x61)
+
+        # Parenthesised (a)–(z)  (U+249C .. U+24B5)
+        for cp in range(0x249C, 0x24B6):
+            subs[chr(cp)] = chr(cp - 0x249C + 0x61)
+
+        # Circled capitals Ⓐ–Ⓩ  (U+24B6 .. U+24CF)
+        for cp in range(0x24B6, 0x24D0):
+            subs[chr(cp)] = chr(cp - 0x24B6 + 0x41)
+
+        # Circled smalls ⓐ–ⓩ  (U+24D0 .. U+24E9)
+        for cp in range(0x24D0, 0x24EA):
+            subs[chr(cp)] = chr(cp - 0x24D0 + 0x61)
+        super().__init__(domain, col, subs)
 
 
 class BiasedSpellCheck(RowWiseRule):
@@ -297,7 +366,8 @@ class Cleaner:
         source_dir = Path(source_dir)
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
-        for csv_path in source_dir.iterdir():
+        for csv_path in sorted(source_dir.iterdir()):
+            print(f"[Event] Cleaning {csv_path}")
             if csv_path.suffix.lower() != ".csv":
                 continue
             df = pd.read_csv(csv_path)

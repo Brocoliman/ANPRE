@@ -15,11 +15,12 @@ import time
 import json
 from collections import defaultdict
 import argparse
+import matplotlib.pyplot as plt
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Data collection tool for patient neuropsychological assessment scores"
+        description="Patient Sheets, Segmentation Template \u2192 Patient Sheet Segments"
     )
     parser.add_argument(
         "-input",
@@ -262,7 +263,8 @@ def segment(
     # ═══════════ processing ════════════════════════════════════
     source_dir = Path(source_dir)
     output_dir = Path(output_dir)
-    filenames = source_dir.iterdir()
+    debug_dir = Path(debug_dir)
+    filenames = sorted(source_dir.iterdir())
 
     for filename in filenames:
         if not filename.is_file():
@@ -294,6 +296,60 @@ def segment(
 
             pix_aligned = cv2.warpPerspective(img_bgr, Hmat, (W_out, H_out))
             aligned_pages.append(pix_aligned)
+
+            # ═══════════ draw debug ════════════════════════════════════
+            vis = img_bgr.copy()
+
+            def draw_ABCl(A, B, C, col):
+                A = A.item()
+                B = B.item()
+                C = C.item()
+                h, w = vis.shape[:2]
+                if abs(B) > abs(A):  # ≈ horizontal line
+                    x1, y1 = 0, int(-C / B)
+                    x2, y2 = w, int((-A * w - C) / B)
+                else:  # ≈ vertical line
+                    x1, y1 = int(-C / A), 0
+                    x2, y2 = int((-B * h - C) / A), h
+                cv2.line(vis, (x1, y1), (x2, y2), col, 2)
+
+            # draw border lines first (green)
+            for coeff in lines.values():
+                draw_ABCl(*coeff, (0, 255, 0))
+
+            # draw probe hits (blue)
+            for pts in border_pts.values():
+                if pts is border_pts["OUT"]:
+                    continue  # handled below
+                for x, y in pts:
+                    cv2.circle(vis, (int(x), int(y)), 5, (255, 0, 0), -1)  # blue
+
+            # draw outlier hits last (pink)
+            for x, y in border_pts["OUT"]:
+                cv2.circle(vis, (int(x), int(y)), 5, (255, 0, 255), -1)  # yellow
+
+            # draw corner intersections last (red)
+            for x, y in corners:
+                cv2.circle(vis, (int(x.item()), int(y.item())), 8, (0, 0, 255), -1)
+
+            # ---- show results -------------------------------------------------------
+            fig, axes = plt.subplots(1, 3, figsize=(14, 10))
+
+            axes[0].set_title("Color diagram")
+            axes[0].imshow(cv2.cvtColor(vis, cv2.COLOR_BGR2RGB))
+            axes[0].axis("off")
+
+            axes[1].set_title("Warped / rectified page")
+            axes[1].imshow(cv2.cvtColor(pix_aligned, cv2.COLOR_BGR2RGB))
+            axes[1].axis("off")
+
+            axes[2].set_title("Dark-pixel mask")
+            axes[2].imshow(border_mask.astype(np.uint8) * 255, cmap="gray")
+            axes[2].axis("off")
+
+            plt.tight_layout()
+            plt.savefig(debug_dir / (f"page{page_no}_" + filename.stem + ".jpg"))
+            plt.close()
 
         # ═══════════ segment all sheets ════════════════════════════════════
         for seg_title, seg_coords in segments.items():

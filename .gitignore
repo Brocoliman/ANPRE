@@ -2,6 +2,7 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,latex,c,c++
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,jupyternotebooks,latex,c,c++
 
+notes.txt
 scratch/out/
 debug/
 
