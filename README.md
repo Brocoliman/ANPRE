@@ -1,6 +1,10 @@
 # ANPRE
 Project to Automate NeuroPsych Record Entry. We aim to utilize AI to engineer a system for automated processing of neuropsych patient evaluation scans into spreadsheets to allow for statistical analysis and further research.
 
+  ![ANPRE poster](paper/poster.svg)
+
+  📄 [Poster (PDF)](paper/poster.pdf)
+
 # Instructions
 
 Below are instructions for installing and using the package as a user and developer.
